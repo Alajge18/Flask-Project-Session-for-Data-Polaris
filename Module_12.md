@@ -116,8 +116,7 @@ When a program (not a browser) sends data, it usually sends **JSON** (JavaScript
 {
     "title": "Learn Flask",
     "description": "Understand routes",
-    "status": "pending",
-    "user_id": 1
+    "status": "pending"
 }
 ```
 
@@ -132,7 +131,6 @@ def api_create_task():
     title = data.get("title")        # "Learn Flask"
     description = data.get("description")  # "Understand routes"
     status = data.get("status")      # "pending"
-    user_id = data.get("user_id")    # 1
 ```
 
 **TaskFlow example** — Creating a task via API:
@@ -142,15 +140,14 @@ def api_create_task():
     data = request.get_json()
     
     # Validate required fields
-    if not data or not data.get("title") or not data.get("user_id"):
-        return jsonify({"error": "Title and user_id are required."}), 400
+    if not data or not data.get("title"):
+        return jsonify({"error": "Title is required."}), 400
     
     # Save to database
     task_id = create_task(
         data["title"],
         data.get("description", ""),    # Default to empty string
-        data.get("status", "pending"),  # Default to "pending"
-        data["user_id"]
+        data.get("status", "pending")   # Default to "pending"
     )
     
     task = get_task_by_id(task_id)
@@ -223,7 +220,7 @@ Testing the API (PowerShell):
 # Create a task via JSON
 curl -X POST http://127.0.0.1:5000/api/tasks `
   -H "Content-Type: application/json" `
-  -d '{"title": "Test Task", "status": "pending", "user_id": 1}'
+  -d '{"title": "Test Task", "status": "pending"}'
 
 # Get all tasks via API
 curl http://127.0.0.1:5000/api/tasks
@@ -248,11 +245,8 @@ curl "http://127.0.0.1:5000/api/tasks?status=pending"
 
 ## G. Practice Task
 
-1. Add a query parameter `?user_id=1` to the `/tasks` route that filters tasks by user.
-   - `/tasks?user_id=1` → shows only tasks belonging to user 1
-   - Hint: `user_id = request.args.get("user_id", type=int)`
-
-2. Test the API by creating a task with curl or Postman, then retrieving it.
+1. Test the API by creating a task with curl or Postman, then retrieving it.
+2. Try filtering tasks by status using query parameters.
 
 ---
 

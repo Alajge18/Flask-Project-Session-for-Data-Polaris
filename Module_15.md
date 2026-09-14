@@ -45,8 +45,7 @@ JSON (JavaScript Object Notation) is a text format for structured data:
     "id": 1,
     "title": "Learn Flask",
     "description": "Understand routes",
-    "status": "pending",
-    "user_id": 1
+    "status": "pending"
 }
 ```
 
@@ -71,14 +70,6 @@ CRUD = the four basic operations on data:
 
 ## D. All API Endpoints in TaskFlow
 
-### User API
-
-| Method | URL | What it does | Status Code |
-|--------|-----|-------------|-------------|
-| POST | `/api/users` | Create a user | 201 Created |
-| GET | `/api/users` | List all users | 200 OK |
-| GET | `/api/users/<id>` | Get one user | 200 OK / 404 |
-
 ### Task API
 
 | Method | URL | What it does | Status Code |
@@ -94,24 +85,22 @@ CRUD = the four basic operations on data:
 
 ## E. Code Implementation
 
-### Create a User (POST)
+### Create a Task (POST)
 
 ```python
-@app.route("/api/users", methods=["POST"])
-def api_create_user():
+@app.route("/api/tasks", methods=["POST"])
+def api_create_task():
     data = request.get_json()                    # Read JSON body
-    if not data or not data.get("name") or not data.get("email"):
-        return jsonify({"error": "Name and email are required."}), 400
+    if not data or not data.get("title"):
+        return jsonify({"error": "Title is required."}), 400
     
-    user_id = create_user(data["name"], data["email"])
-    user = get_user_by_id(user_id)
+    task_id = create_task(data["title"], data.get("description", ""), data.get("status", "pending"))
+    task = get_task_by_id(task_id)
     return jsonify({
-        "message": "User created successfully",
-        "user": user_to_dict(user)
+        "message": "Task created successfully",
+        "task": task_to_dict(task)
     }), 201                                       # 201 = Created
 ```
-
-### Get All Tasks (GET)
 
 ```python
 @app.route("/api/tasks", methods=["GET"])
@@ -177,18 +166,10 @@ def api_delete_task(task_id):
 ### Using PowerShell curl:
 
 ```powershell
-# Create a user
-curl -X POST http://127.0.0.1:5000/api/users `
-  -H "Content-Type: application/json" `
-  -d '{"name": "Alice", "email": "alice@example.com"}'
-
-# List all users
-curl http://127.0.0.1:5000/api/users
-
 # Create a task
 curl -X POST http://127.0.0.1:5000/api/tasks `
   -H "Content-Type: application/json" `
-  -d '{"title": "Learn Flask", "status": "pending", "user_id": 1}'
+  -d '{"title": "Learn Flask", "status": "pending"}'
 
 # Get all tasks
 curl http://127.0.0.1:5000/api/tasks
@@ -217,7 +198,7 @@ curl -X DELETE http://127.0.0.1:5000/api/tasks/1
 
 ## I. Practice Task
 
-1. Test all 9 API endpoints using curl or Postman.
+1. Test all API endpoints using curl or Postman.
 2. Try creating a task with missing `title` — observe the 400 error.
 3. Try getting a task with ID 999 — observe the 404 error.
 
@@ -249,7 +230,7 @@ curl -X DELETE http://127.0.0.1:5000/api/tasks/1
 | 1 | What an API is | Done | Waiter analogy + explanation |
 | 2 | JSON request/response | Done | `request.get_json()` + `jsonify()` |
 | 3 | CRUD | Done | All 4 operations for tasks |
-| 4 | REST-style routes | Done | 9 endpoints with proper HTTP methods |
+| 4 | REST-style routes | Done | 6 endpoints with proper HTTP methods |
 | 5 | HTML vs API | Done | Comparison table |
 
 **All 5 syllabus points for Module 15 are covered.**

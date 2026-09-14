@@ -1,6 +1,14 @@
-# TaskFlow — Task Management System
+# TaskFlow — Personal Task Management System
 
 A beginner-friendly Flask project covering Modules 10–19.
+
+## Features
+
+- **View** all your tasks with status filter (Pending / In Progress / Completed)
+- **Add** new tasks with title, description, and status
+- **Edit** existing tasks
+- **Delete** tasks
+- **Dashboard** with task count stats
 
 ## Setup
 
@@ -27,8 +35,6 @@ TaskFlow/
 ├── templates/        — HTML pages
 │   ├── base.html
 │   ├── index.html
-│   ├── users.html
-│   ├── add_user.html
 │   ├── tasks.html
 │   ├── add_task.html
 │   ├── task_detail.html
@@ -41,9 +47,6 @@ TaskFlow/
 
 | Method | URL | Description |
 |--------|-----|-------------|
-| POST   | /api/users | Create user |
-| GET    | /api/users | List users |
-| GET    | /api/users/1 | Get user by ID |
 | POST   | /api/tasks | Create task |
 | GET    | /api/tasks | List tasks |
 | GET    | /api/tasks?status=pending | Filter tasks |

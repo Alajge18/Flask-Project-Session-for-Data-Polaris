@@ -178,3 +178,32 @@ td a {
 .actions {
     margin-top: 10px;
 }
+
+/* Stats cards */
+.stats {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.stat-card {
+    background: white;
+    border: 1px solid #ddd;
+    padding: 15px 25px;
+    text-align: center;
+    flex: 1;
+    min-width: 120px;
+}
+
+.stat-card h3 {
+    margin: 0;
+    font-size: 28px;
+    color: #333;
+}
+
+.stat-card p {
+    margin: 5px 0 0;
+    color: #666;
+    font-size: 14px;
+}

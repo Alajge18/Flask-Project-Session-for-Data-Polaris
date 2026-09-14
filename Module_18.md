@@ -8,10 +8,9 @@
 |---|-------|--------|
 | 1 | What SQLite is | Covered below |
 | 2 | Creating tasks.db | Covered below |
-| 3 | Users and Tasks tables | Covered below |
-| 4 | User-Task relationship | Covered below |
-| 5 | Flask + SQLite architecture | Covered below |
-| 6 | Database persistence | Covered below |
+| 3 | Tasks table | Covered below |
+| 4 | Flask + SQLite architecture | Covered below |
+| 5 | Database persistence | Covered below |
 
 ---
 
@@ -49,7 +48,6 @@ DATABASE = "tasks.db"
 def get_db():
     conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA foreign_keys = ON")
     return conn
 ```
 
@@ -58,8 +56,7 @@ def get_db():
 | Line | What it does | Why |
 |------|-------------|-----|
 | `sqlite3.connect(DATABASE)` | Opens the database file (creates it if it doesn't exist) | Every operation needs a connection |
-| `conn.row_factory = sqlite3.Row` | Makes rows accessible by column name | `row["name"]` instead of `row[1]` |
-| `PRAGMA foreign_keys = ON` | Enables foreign key enforcement | SQLite disables them by default |
+| `conn.row_factory = sqlite3.Row` | Makes rows accessible by column name | `row["title"]` instead of `row[1]` |
 
 ### Key Concepts
 
@@ -78,7 +75,7 @@ conn.close()         # Hang up
 A **cursor** is the tool that executes SQL commands and returns results.
 
 ```python
-cursor = conn.execute("SELECT * FROM users")  # Run the SQL
+cursor = conn.execute("SELECT * FROM tasks")  # Run the SQL
 rows = cursor.fetchall()                       # Get the results
 ```
 
@@ -89,7 +86,7 @@ Most of the time, `conn.execute()` creates a cursor automatically.
 `commit()` saves your changes to the database file permanently.
 
 ```python
-conn.execute("INSERT INTO users ...")
+conn.execute("INSERT INTO tasks ...")
 conn.commit()   # Without this, the INSERT is NOT saved!
 conn.close()
 ```
@@ -106,19 +103,11 @@ conn.close()  # Free up resources
 
 ---
 
-### Creating Tables
+### Creating the Tasks Table
 
 ```python
 def init_db():
     conn = get_db()
-    
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            email TEXT NOT NULL
-        )
-    """)
     
     conn.execute("""
         CREATE TABLE IF NOT EXISTS tasks (
@@ -126,8 +115,7 @@ def init_db():
             title TEXT NOT NULL,
             description TEXT,
             status TEXT NOT NULL DEFAULT 'pending',
-            user_id INTEGER NOT NULL,
-            FOREIGN KEY (user_id) REFERENCES users (id)
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
     
@@ -148,21 +136,21 @@ with app.app_context():
 
 ```python
 # CREATE
-def create_user(name, email):
+def create_task(title, description, status):
     conn = get_db()
     cursor = conn.execute(
-        "INSERT INTO users (name, email) VALUES (?, ?)",
-        (name, email)
+        "INSERT INTO tasks (title, description, status) VALUES (?, ?, ?)",
+        (title, description, status)
     )
     conn.commit()
-    user_id = cursor.lastrowid
+    task_id = cursor.lastrowid
     conn.close()
-    return user_id
+    return task_id
 
 # READ (all)
 def get_all_tasks():
     conn = get_db()
-    tasks = conn.execute("SELECT * FROM tasks").fetchall()
+    tasks = conn.execute("SELECT * FROM tasks ORDER BY id DESC").fetchall()
     conn.close()
     return tasks
 
@@ -179,10 +167,20 @@ def get_task_by_id(task_id):
 def get_tasks_by_status(status):
     conn = get_db()
     tasks = conn.execute(
-        "SELECT * FROM tasks WHERE status = ?", (status,)
+        "SELECT * FROM tasks WHERE status = ? ORDER BY id DESC", (status,)
     ).fetchall()
     conn.close()
     return tasks
+
+# READ (counts for dashboard)
+def get_task_counts():
+    conn = get_db()
+    total = conn.execute("SELECT COUNT(*) FROM tasks").fetchone()[0]
+    pending = conn.execute("SELECT COUNT(*) FROM tasks WHERE status = 'pending'").fetchone()[0]
+    in_progress = conn.execute("SELECT COUNT(*) FROM tasks WHERE status = 'in_progress'").fetchone()[0]
+    completed = conn.execute("SELECT COUNT(*) FROM tasks WHERE status = 'completed'").fetchone()[0]
+    conn.close()
+    return {"total": total, "pending": pending, "in_progress": in_progress, "completed": completed}
 
 # UPDATE
 def update_task(task_id, title, description, status):
@@ -225,7 +223,7 @@ Flask server (app.py)     ←→     tasks.db file (on hard drive)
 
 ```
 Browser request → app.py route → database.py function → tasks.db
-                                                        ↓
+                                                         ↓
 Browser display ← app.py template ← database.py result ←
 ```
 
@@ -241,10 +239,10 @@ def tasks():
 
 # Step 3 inside database.py:
 def get_all_tasks():
-    conn = get_db()                                        # Connect to tasks.db
-    tasks = conn.execute("SELECT * FROM tasks").fetchall()  # Run SQL
-    conn.close()                                           # Disconnect
-    return tasks                                           # Return results
+    conn = get_db()                                                    # Connect to tasks.db
+    tasks = conn.execute("SELECT * FROM tasks ORDER BY id DESC").fetchall()  # Run SQL
+    conn.close()                                                       # Disconnect
+    return tasks                                                       # Return results
 ```
 
 ---
@@ -255,7 +253,6 @@ def get_all_tasks():
 |---------|---------|-----|
 | Forgetting `conn.commit()` | Data not saved to file | Always commit after INSERT/UPDATE/DELETE |
 | Forgetting `conn.close()` | Connection leak | Always close after you're done |
-| Not enabling foreign keys | Invalid user_id allowed | Add `PRAGMA foreign_keys = ON` |
 | Forgetting `row_factory = sqlite3.Row` | Can't access columns by name | Set it in `get_db()` |
 | Passing wrong number of `?` values | `ProgrammingError` | Count `?` must match tuple length |
 
@@ -263,16 +260,16 @@ def get_all_tasks():
 
 ## F. Practice Task
 
-1. Open Python terminal and manually insert a user:
+1. Open Python terminal and manually insert a task:
    ```python
    import sqlite3
    conn = sqlite3.connect("tasks.db")
-   conn.execute("INSERT INTO users (name, email) VALUES (?, ?)", ("Charlie", "c@test.com"))
+   conn.execute("INSERT INTO tasks (title, description, status) VALUES (?, ?, ?)", ("Test Task", "Testing", "pending"))
    conn.commit()
-   print(conn.execute("SELECT * FROM users").fetchall())
+   print(conn.execute("SELECT * FROM tasks").fetchall())
    conn.close()
    ```
-2. Restart the Flask server and verify Charlie appears on the Users page.
+2. Restart the Flask server and verify the task appears on the Tasks page.
 3. This proves: data persists even when the server is off.
 
 ---
@@ -292,7 +289,7 @@ def get_all_tasks():
    - Nothing! Data is in the file. Server just reads/writes to it.
 
 5. **"What is `row_factory = sqlite3.Row`?"**
-   - Lets you access columns by name (`row["name"]`) instead of index (`row[1]`).
+   - Lets you access columns by name (`row["title"]`) instead of index (`row[1]`).
 
 ---
 
@@ -302,9 +299,8 @@ def get_all_tasks():
 |---|---------------|--------|-------------|
 | 1 | What SQLite is | Done | Single-file database, no server |
 | 2 | Creating tasks.db | Done | Auto-created by `sqlite3.connect()` |
-| 3 | Users and Tasks tables | Done | `init_db()` with CREATE TABLE |
-| 4 | User-Task relationship | Done | Foreign key in tasks table |
-| 5 | Flask + SQLite architecture | Done | Route → database function → SQL |
-| 6 | Database persistence | Done | Data stays after server stops |
+| 3 | Tasks table | Done | `init_db()` with CREATE TABLE |
+| 4 | Flask + SQLite architecture | Done | Route → database function → SQL |
+| 5 | Database persistence | Done | Data stays after server stops |
 
-**All 6 syllabus points for Module 18 are covered.**
+**All 5 syllabus points for Module 18 are covered.**

@@ -1,7 +1,7 @@
 <!-- ============================================================ -->
-<!-- index.html — Homepage                                        -->
+<!-- index.html — Homepage / Dashboard                            -->
 <!-- ============================================================ -->
-<!-- This page shows a welcome message and quick navigation.      -->
+<!-- Shows task stats and quick navigation links.                  -->
 <!-- {% extends "base.html" %} means: use base.html as the        -->
 <!-- parent template and fill in the content block below.          -->
 <!-- ============================================================ -->
@@ -12,13 +12,32 @@
 <!-- Everything inside this block replaces {% block content %} in base.html -->
 
 <h1>Welcome to TaskFlow</h1>
-<p>A simple task management system built with Flask.</p>
+<p>Your personal task management system.</p>
+
+<!-- Task stats cards -->
+<div class="stats">
+    <div class="stat-card">
+        <h3>{{ counts.total }}</h3>
+        <p>Total Tasks</p>
+    </div>
+    <div class="stat-card">
+        <h3>{{ counts.pending }}</h3>
+        <p>Pending</p>
+    </div>
+    <div class="stat-card">
+        <h3>{{ counts.in_progress }}</h3>
+        <p>In Progress</p>
+    </div>
+    <div class="stat-card">
+        <h3>{{ counts.completed }}</h3>
+        <p>Completed</p>
+    </div>
+</div>
 
 <!-- Quick navigation buttons -->
 <div class="actions">
     <a href="{{ url_for('tasks') }}" class="btn">View Tasks</a>
     <a href="{{ url_for('add_task') }}" class="btn">Add Task</a>
-    <a href="{{ url_for('users') }}" class="btn">View Users</a>
 </div>
 
 {% endblock %}

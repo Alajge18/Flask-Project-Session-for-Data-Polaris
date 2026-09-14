@@ -56,9 +56,7 @@ TaskFlow/
 │
 ├── templates/           ← HTML pages (Jinja2)
 │   ├── base.html       ← Parent template (nav, flash messages)
-│   ├── index.html      ← Homepage
-│   ├── users.html      ← User list
-│   ├── add_user.html   ← Add user form
+│   ├── index.html      ← Homepage / Dashboard
 │   ├── tasks.html      ← Task list + status filter
 │   ├── add_task.html   ← Add task form
 │   ├── task_detail.html← View one task
@@ -95,17 +93,17 @@ TaskFlow/
 |---------------|---------|
 | Connects to SQLite | `sqlite3.connect("tasks.db")` |
 | Creates tables | `CREATE TABLE IF NOT EXISTS ...` |
-| Inserts data | `INSERT INTO users ...` |
+| Inserts data | `INSERT INTO tasks ...` |
 | Reads data | `SELECT * FROM tasks` |
 | Updates data | `UPDATE tasks SET ...` |
 | Deletes data | `DELETE FROM tasks ...` |
+| Counts data | `SELECT COUNT(*) FROM tasks` |
 | Uses parameterized queries | `WHERE id = ?` with `(task_id,)` |
 
 ### [models.py](file:///c:/Users/chaud/Desktop/Projects/Data%20polaris/task%20management%20system%20by%20me/TaskFlow/models.py) — The Translator
 
 | Responsibility | Example |
 |---------------|---------|
-| Converts user rows to dict | `user_to_dict(user)` |
 | Converts task rows to dict | `task_to_dict(task)` |
 | Defines valid statuses | `VALID_STATUSES = ["pending", ...]` |
 
@@ -123,9 +121,7 @@ TaskFlow/
 | File | What it shows |
 |------|--------------|
 | `base.html` | Navigation bar + flash messages (shared by all pages) |
-| `index.html` | Homepage with welcome message |
-| `users.html` | Table of all users |
-| `add_user.html` | Form to add a user |
+| `index.html` | Homepage with dashboard stats |
 | `tasks.html` | Table of all tasks + filter links |
 | `add_task.html` | Form to add a task |
 | `task_detail.html` | One task's full details |
@@ -214,7 +210,6 @@ base.html (parent)
 ├── Has: nav bar, flash messages, {% block content %}
 │
 ├── index.html     → {% extends "base.html" %} → fills content block
-├── users.html     → {% extends "base.html" %} → fills content block
 ├── tasks.html     → {% extends "base.html" %} → fills content block
 ├── add_task.html  → {% extends "base.html" %} → fills content block
 ├── task_detail.html → {% extends "base.html" %} → fills content block
@@ -303,7 +298,7 @@ base.html (parent)
 | 3 | database.py | Done | SQLite connection, CRUD functions |
 | 4 | models.py | Done | Data conversion, valid statuses |
 | 5 | forms.py | Done | Flask-WTF form classes |
-| 6 | Templates | Done | 7 templates with inheritance |
+| 6 | Templates | Done | 6 templates with inheritance |
 | 7 | Static files | Done | style.css for styling |
 | 8 | requirements.txt | Done | Flask, Flask-WTF, WTForms |
 | 9 | Separation of responsibilities | Done | Each file has one job |

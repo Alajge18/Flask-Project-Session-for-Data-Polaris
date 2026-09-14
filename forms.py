@@ -20,16 +20,14 @@ from flask_wtf import FlaskForm
 # FlaskForm is the base class for all our forms
 # It adds CSRF protection automatically
 
-from wtforms import StringField, TextAreaField, SelectField, IntegerField, SubmitField
+from wtforms import StringField, TextAreaField, SelectField, SubmitField
 # StringField    → A single-line text input (<input type="text">)
 # TextAreaField  → A multi-line text input (<textarea>)
 # SelectField    → A dropdown menu (<select>)
-# IntegerField   → A number input (only accepts integers)
 # SubmitField    → A submit button (<input type="submit">)
 
-from wtforms.validators import DataRequired, NumberRange
+from wtforms.validators import DataRequired
 # DataRequired → The field cannot be empty (must have a value)
-# NumberRange  → The number must be within a specific range
 
 
 class AddTaskForm(FlaskForm):
@@ -40,7 +38,6 @@ class AddTaskForm(FlaskForm):
       - title: Required text field for the task name
       - description: Optional text area for details
       - status: Dropdown with three choices
-      - user_id: Required number for which user owns this task
       - submit: The submit button
     """
     title = StringField(
@@ -64,15 +61,6 @@ class AddTaskForm(FlaskForm):
         validators=[DataRequired()]
     )
 
-    user_id = IntegerField(
-        "User ID",
-        validators=[
-            DataRequired(message="User ID is required."),
-            NumberRange(min=1, message="User ID must be a positive number.")
-            # NumberRange ensures the user can't enter 0 or negative numbers
-        ]
-    )
-
     submit = SubmitField("Add Task")
     # This creates the submit button with the text "Add Task"
 
@@ -81,8 +69,7 @@ class EditTaskForm(FlaskForm):
     """
     Form to edit an existing task.
     
-    Same as AddTaskForm but WITHOUT user_id.
-    When editing, we don't change which user owns the task.
+    Same fields as AddTaskForm — title, description, and status.
     """
     title = StringField(
         "Title",
@@ -102,22 +89,3 @@ class EditTaskForm(FlaskForm):
     )
 
     submit = SubmitField("Update Task")
-
-
-class AddUserForm(FlaskForm):
-    """
-    Form to add a new user.
-    
-    Both name and email are required fields.
-    """
-    name = StringField(
-        "Name",
-        validators=[DataRequired(message="Name is required.")]
-    )
-
-    email = StringField(
-        "Email",
-        validators=[DataRequired(message="Email is required.")]
-    )
-
-    submit = SubmitField("Add User")

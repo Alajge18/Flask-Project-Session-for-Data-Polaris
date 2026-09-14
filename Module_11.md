@@ -158,7 +158,6 @@ Request: GET /tasks/3
 
 Flask checks each route:
   @app.route("/")                    → no match → SKIP
-  @app.route("/users")              → no match → SKIP
   @app.route("/tasks")              → "/tasks/3" != "/tasks" → SKIP
   @app.route("/tasks/<int:task_id>") → MATCH! "3" converts to int → Run task_detail(3)
 ```
@@ -172,8 +171,6 @@ Flask checks each route:
 | URL | Type | Method | Function | What it does |
 |-----|------|--------|----------|-------------|
 | `/` | Static | GET | `home()` | Homepage |
-| `/users` | Static | GET | `users()` | List users |
-| `/users/add` | Static | GET/POST | `add_user()` | Add user form |
 | `/tasks` | Static | GET | `tasks()` | List tasks |
 | `/tasks/add` | Static | GET/POST | `add_task()` | Add task form |
 | `/tasks/<int:task_id>` | Dynamic | GET | `task_detail()` | View one task |
@@ -197,8 +194,7 @@ Flask checks each route:
 ## H. Practice Task
 
 1. Add a route `/tasks/<int:task_id>/status` that returns only the status of a task.
-2. Add a route `/users/<int:user_id>/tasks` that returns all tasks for a specific user.
-3. Test in your browser.
+2. Test in your browser.
 
 ---
 
@@ -225,9 +221,9 @@ Flask checks each route:
 
 | # | Syllabus Point | Status | Demonstrated |
 |---|---------------|--------|-------------|
-| 1 | Static routes | Done | `/`, `/about`, `/tasks`, `/users` |
+| 1 | Static routes | Done | `/`, `/tasks` |
 | 2 | Dynamic routes | Done | `/tasks/<int:task_id>`, etc. |
-| 3 | URL parameters | Done | `task_id`, `user_id` in routes |
+| 3 | URL parameters | Done | `task_id` in routes |
 | 4 | Route converters | Done | `int:`, `string` (default) |
 | 5 | `@app.route()` | Done | Used in all routes |
 

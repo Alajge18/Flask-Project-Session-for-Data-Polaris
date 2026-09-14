@@ -15,35 +15,18 @@
 # ============================================================
 
 
-def user_to_dict(user):
-    """
-    Convert a database user row to a Python dictionary.
-    
-    Input:  sqlite3.Row object (from database query)
-    Output: {"id": 1, "name": "Alice", "email": "alice@example.com"}
-    
-    This dictionary can then be converted to JSON by jsonify()
-    """
-    return {
-        "id": user["id"],         # user["id"] works because of row_factory = sqlite3.Row
-        "name": user["name"],     # Access column values by name
-        "email": user["email"]
-    }
-
-
 def task_to_dict(task):
     """
     Convert a database task row to a Python dictionary.
     
     Input:  sqlite3.Row object (from database query)
-    Output: {"id": 1, "title": "...", "description": "...", "status": "...", "user_id": 1}
+    Output: {"id": 1, "title": "...", "description": "...", "status": "..."}
     """
     return {
         "id": task["id"],
         "title": task["title"],
         "description": task["description"],
-        "status": task["status"],
-        "user_id": task["user_id"]
+        "status": task["status"]
     }
 
 

@@ -1,8 +1,8 @@
 <!-- ============================================================ -->
 <!-- add_task.html — Form to Add a New Task                       -->
 <!-- ============================================================ -->
-<!-- Similar to add_user.html but with more fields.               -->
 <!-- Flask-WTF handles validation and CSRF protection.            -->
+<!-- No user_id needed — this is a personal task manager.         -->
 <!-- ============================================================ -->
 
 {% extends "base.html" %}
@@ -45,16 +45,6 @@
             The choices come from forms.py SelectField
         -->
         {% for error in form.status.errors %}
-            <span class="error">{{ error }}</span>
-        {% endfor %}
-    </div>
-
-    <!-- ===== User ID Field (required) ===== -->
-    <div class="form-group">
-        {{ form.user_id.label }}
-        {{ form.user_id() }}
-        <!-- Must be an existing user's ID. app.py checks this before saving. -->
-        {% for error in form.user_id.errors %}
             <span class="error">{{ error }}</span>
         {% endfor %}
     </div>

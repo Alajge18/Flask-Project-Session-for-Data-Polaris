@@ -1,10 +1,9 @@
 # ============================================================
 # app.py — The Main Entry Point of TaskFlow
 # ============================================================
-# This is the FIRST file that runs when you type: python app.py
-# It creates the Flask app and defines ALL the routes (URLs).
-# Think of it as the "receptionist" — it receives every request
-# from the browser and decides what to do with it.
+# Personal Task Management System
+# No admin panel, no user management — just YOUR tasks.
+# View, Add, Edit, Delete your tasks easily.
 # ============================================================
 
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
@@ -16,17 +15,17 @@ from flask import Flask, render_template, request, redirect, url_for, flash, jso
 # flash         → Shows a one-time message to the user (like "Task created!")
 # jsonify       → Converts Python dictionaries to JSON responses for APIs
 
-from database import init_db, get_all_users, get_user_by_id, create_user
-from database import get_all_tasks, get_task_by_id, get_tasks_by_status
+from database import init_db
+from database import get_all_tasks, get_task_by_id, get_tasks_by_status, get_task_counts
 from database import create_task, update_task, delete_task
 # We import all our database functions from database.py
 # This keeps app.py clean — it doesn't need to know SQL
 
-from models import user_to_dict, task_to_dict, VALID_STATUSES
-# user_to_dict / task_to_dict → Convert database rows to dictionaries (for JSON)
+from models import task_to_dict, VALID_STATUSES
+# task_to_dict → Convert database rows to dictionaries (for JSON)
 # VALID_STATUSES → List of allowed statuses: ["pending", "in_progress", "completed"]
 
-from forms import AddTaskForm, EditTaskForm, AddUserForm
+from forms import AddTaskForm, EditTaskForm
 # These are Flask-WTF form classes that handle form validation
 
 
@@ -45,7 +44,7 @@ app.config["SECRET_KEY"] = "my-secret-key-for-learning"
 with app.app_context():
     init_db()
 # This runs init_db() when the app starts
-# init_db() creates the users and tasks tables if they don't exist yet
+# init_db() creates the tasks table if it doesn't exist yet
 # app_context() is needed because database operations require Flask to be "active"
 
 
@@ -59,51 +58,13 @@ with app.app_context():
 # ============================================================
 
 
-# --- Homepage ---
+# --- Homepage / Dashboard ---
 @app.route("/")
 def home():
-    """Show the homepage."""
-    # render_template("index.html") reads templates/index.html,
-    # processes any Jinja2 code inside it (like {{ }} and {% %}),
-    # and returns the final HTML to the browser
-    return render_template("index.html")
-
-
-# --- List All Users ---
-@app.route("/users")
-def users():
-    """Show a page with all users in a table."""
-    all_users = get_all_users()  # Get all users from the database
-    # Pass the users list to the template so it can display them
-    # In the template, we access this as: {% for user in users %}
-    return render_template("users.html", users=all_users)
-
-
-# --- Add a New User (Form Page) ---
-@app.route("/users/add", methods=["GET", "POST"])
-def add_user():
-    """
-    Show the add user form (GET) or process the submitted form (POST).
-    
-    methods=["GET", "POST"] means this route handles BOTH:
-      - GET  → User visits the page → Show the empty form
-      - POST → User clicks Submit  → Process the form data
-    """
-    form = AddUserForm()  # Create a form instance
-
-    # validate_on_submit() returns True ONLY when:
-    #   1. The request is POST (form was submitted)
-    #   2. All validation rules passed (name and email are not empty)
-    #   3. CSRF token is valid (prevents fake submissions)
-    if form.validate_on_submit():
-        create_user(form.name.data, form.email.data)  # Save to database
-        flash("User created successfully!", "success")  # Show success message
-        return redirect(url_for("users"))  # Send browser to /users page
-        # redirect + url_for = Post/Redirect/Get pattern
-        # This prevents the form from being resubmitted if user refreshes the page
-
-    # If GET request OR validation failed → show the form
-    return render_template("add_user.html", form=form)
+    """Show the homepage with task stats."""
+    # Get task counts for the dashboard stats
+    counts = get_task_counts()
+    return render_template("index.html", counts=counts)
 
 
 # --- List All Tasks (with optional status filter) ---
@@ -125,7 +86,7 @@ def tasks():
     else:
         all_tasks = get_all_tasks()  # Get all tasks
 
-    return render_template("tasks.html", tasks=all_tasks)
+    return render_template("tasks.html", tasks=all_tasks, current_status=status)
 
 
 # --- View One Task ---
@@ -156,18 +117,11 @@ def add_task():
     form = AddTaskForm()
 
     if form.validate_on_submit():
-        # Extra check: make sure the user_id belongs to a real user
-        user = get_user_by_id(form.user_id.data)
-        if not user:
-            flash("User ID does not exist. Create the user first.", "error")
-            return render_template("add_task.html", form=form)
-
         # All checks passed → save the task
         create_task(
             form.title.data,        # Task title from the form
             form.description.data,  # Task description from the form
-            form.status.data,       # Selected status from the dropdown
-            form.user_id.data       # User ID from the form
+            form.status.data        # Selected status from the dropdown
         )
         flash("Task created successfully!", "success")
         return redirect(url_for("tasks"))  # Go to task list
@@ -234,52 +188,6 @@ def delete_task_route(task_id):
 # ============================================================
 
 
-# --- API: Create a User ---
-@app.route("/api/users", methods=["POST"])
-def api_create_user():
-    """
-    Create a new user via JSON.
-    
-    Expected JSON body:
-      {"name": "Alice", "email": "alice@example.com"}
-    """
-    data = request.get_json()  # Read the JSON sent by the client
-
-    # Validate: name and email must be present
-    if not data or not data.get("name") or not data.get("email"):
-        return jsonify({"error": "Name and email are required."}), 400
-        # 400 = Bad Request (client sent wrong data)
-
-    user_id = create_user(data["name"], data["email"])  # Save to database
-    user = get_user_by_id(user_id)  # Fetch the newly created user
-
-    return jsonify({
-        "message": "User created successfully",
-        "user": user_to_dict(user)  # Convert database row to dictionary
-    }), 201  # 201 = Created (new resource was made)
-
-
-# --- API: List All Users ---
-@app.route("/api/users", methods=["GET"])
-def api_get_users():
-    """Return all users as a JSON list."""
-    users = get_all_users()
-    # Convert each user row to a dictionary, then return as JSON list
-    return jsonify([user_to_dict(u) for u in users]), 200  # 200 = OK
-
-
-# --- API: Get One User ---
-@app.route("/api/users/<int:user_id>", methods=["GET"])
-def api_get_user(user_id):
-    """Return one user by ID as JSON."""
-    user = get_user_by_id(user_id)
-
-    if not user:
-        return jsonify({"error": "User not found."}), 404  # 404 = Not Found
-
-    return jsonify(user_to_dict(user)), 200
-
-
 # --- API: Create a Task ---
 @app.route("/api/tasks", methods=["POST"])
 def api_create_task():
@@ -287,28 +195,23 @@ def api_create_task():
     Create a new task via JSON.
     
     Expected JSON body:
-      {"title": "Learn Flask", "description": "...", "status": "pending", "user_id": 1}
+      {"title": "Learn Flask", "description": "...", "status": "pending"}
     """
     data = request.get_json()
 
     # Validate required fields
-    if not data or not data.get("title") or not data.get("user_id"):
-        return jsonify({"error": "Title and user_id are required."}), 400
+    if not data or not data.get("title"):
+        return jsonify({"error": "Title is required."}), 400
 
     # Validate status (if provided)
     if data.get("status") and data["status"] not in VALID_STATUSES:
         return jsonify({"error": f"Invalid status. Use: {VALID_STATUSES}"}), 400
 
-    # Check that the user exists
-    user = get_user_by_id(data["user_id"])
-    if not user:
-        return jsonify({"error": "User not found."}), 404
-
     # Set default status to "pending" if not provided
     status = data.get("status", "pending")
 
     # Save to database
-    task_id = create_task(data["title"], data.get("description", ""), status, data["user_id"])
+    task_id = create_task(data["title"], data.get("description", ""), status)
     task = get_task_by_id(task_id)
 
     return jsonify({

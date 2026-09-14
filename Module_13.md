@@ -84,16 +84,10 @@ def add_task():
     form = AddTaskForm()                    # Create form instance
     
     if form.validate_on_submit():           # POST + validation passed?
-        user = get_user_by_id(form.user_id.data)
-        if not user:
-            flash("User ID does not exist.", "error")
-            return render_template("add_task.html", form=form)
-        
         create_task(                        # Save to database
             form.title.data,
             form.description.data,
-            form.status.data,
-            form.user_id.data
+            form.status.data
         )
         flash("Task created!", "success")   # Show success message
         return redirect(url_for("tasks"))   # Go to task list
@@ -226,7 +220,6 @@ STEP 4: Browser loads /tasks (GET request)
 
 1. Try submitting the Add Task form with an empty title. Observe the validation error.
 2. Submit a valid task. See the flash message appear, then refresh — it's gone.
-3. Try adding a task with a user_id that doesn't exist (like 999).
 
 ---
 
@@ -253,7 +246,7 @@ STEP 4: Browser loads /tasks (GET request)
 
 | # | Syllabus Point | Status | Demonstrated |
 |---|---------------|--------|-------------|
-| 1 | HTML form creation | Done | add_task.html, add_user.html, edit_task.html |
+| 1 | HTML form creation | Done | add_task.html, edit_task.html |
 | 2 | GET vs POST | Done | GET shows form, POST processes it |
 | 3 | Form submission | Done | Browser sends POST to Flask |
 | 4 | Form data | Done | `form.title.data` reads submitted value |

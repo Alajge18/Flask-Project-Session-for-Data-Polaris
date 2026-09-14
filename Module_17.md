@@ -35,10 +35,12 @@ Imagine you're in a library. You can't just grab books yourself — you talk to 
 ### 1. CREATE TABLE — Make a new table
 
 ```sql
-CREATE TABLE IF NOT EXISTS users (
+CREATE TABLE IF NOT EXISTS tasks (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    email TEXT NOT NULL
+    title TEXT NOT NULL,
+    description TEXT,
+    status TEXT NOT NULL DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 ```
 
@@ -48,12 +50,14 @@ CREATE TABLE IF NOT EXISTS users (
 |-----|---------|
 | `CREATE TABLE` | Make a new table |
 | `IF NOT EXISTS` | Only if it doesn't already exist (safe to run multiple times) |
-| `users` | The table name |
+| `tasks` | The table name |
 | `id INTEGER` | Column named "id" that stores whole numbers |
 | `PRIMARY KEY` | This column uniquely identifies each row |
 | `AUTOINCREMENT` | Automatically assign the next number (1, 2, 3...) |
-| `name TEXT` | Column named "name" that stores text |
+| `title TEXT` | Column named "title" that stores text |
 | `NOT NULL` | This column cannot be empty |
+| `DEFAULT 'pending'` | If no status is given, use 'pending' |
+| `DEFAULT CURRENT_TIMESTAMP` | Auto-fill with the current date and time |
 
 **Python code in [database.py](file:///c:/Users/chaud/Desktop/Projects/Data%20polaris/task%20management%20system%20by%20me/TaskFlow/database.py):**
 
@@ -61,78 +65,61 @@ CREATE TABLE IF NOT EXISTS users (
 def init_db():
     conn = get_db()
     conn.execute("""
-        CREATE TABLE IF NOT EXISTS users (
+        CREATE TABLE IF NOT EXISTS tasks (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            email TEXT NOT NULL
+            title TEXT NOT NULL,
+            description TEXT,
+            status TEXT NOT NULL DEFAULT 'pending',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
     conn.commit()
     conn.close()
 ```
 
-### Tasks table with foreign key:
-
-```sql
-CREATE TABLE IF NOT EXISTS tasks (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    title TEXT NOT NULL,
-    description TEXT,
-    status TEXT NOT NULL DEFAULT 'pending',
-    user_id INTEGER NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES users (id)
-);
-```
-
-| New SQL | Meaning |
-|---------|---------|
-| `description TEXT` | No NOT NULL → this column is optional |
-| `DEFAULT 'pending'` | If no status is given, use 'pending' |
-| `FOREIGN KEY (user_id) REFERENCES users (id)` | user_id must match an existing id in users |
-
 ---
 
 ### 2. INSERT INTO — Add a new row
 
 ```sql
-INSERT INTO users (name, email) VALUES ('Alice', 'alice@example.com');
+INSERT INTO tasks (title, description, status) VALUES ('Learn Flask', 'Understand routes', 'pending');
 ```
 
 **Word by word:**
 
 | SQL | Meaning |
 |-----|---------|
-| `INSERT INTO users` | Add a new row to the users table |
-| `(name, email)` | We're filling these columns |
-| `VALUES ('Alice', 'alice@example.com')` | With these values |
+| `INSERT INTO tasks` | Add a new row to the tasks table |
+| `(title, description, status)` | We're filling these columns |
+| `VALUES ('Learn Flask', ...)` | With these values |
 
 Note: We don't specify `id` because `AUTOINCREMENT` fills it automatically.
 
 **Python code:**
 
 ```python
-def create_user(name, email):
+def create_task(title, description, status):
     conn = get_db()
     cursor = conn.execute(
-        "INSERT INTO users (name, email) VALUES (?, ?)",
-        (name, email)
+        "INSERT INTO tasks (title, description, status) VALUES (?, ?, ?)",
+        (title, description, status)
     )
     conn.commit()
-    user_id = cursor.lastrowid  # Get the auto-generated ID
+    task_id = cursor.lastrowid  # Get the auto-generated ID
     conn.close()
-    return user_id
+    return task_id
 ```
 
 **Why `?` instead of putting values directly?**
 
 ```python
 # DANGEROUS — SQL Injection attack possible!
-conn.execute(f"INSERT INTO users (name, email) VALUES ('{name}', '{email}')")
-# A hacker could set name to: Alice'); DROP TABLE users; --
-# This would DELETE your entire users table!
+conn.execute(f"INSERT INTO tasks (title) VALUES ('{title}')")
+# A hacker could set title to: '); DROP TABLE tasks; --
+# This would DELETE your entire tasks table!
 
 # SAFE — Parameterized query
-conn.execute("INSERT INTO users (name, email) VALUES (?, ?)", (name, email))
+conn.execute("INSERT INTO tasks (title, description, status) VALUES (?, ?, ?)", (title, description, status))
 # The ? placeholders are safely escaped. No injection possible.
 ```
 
@@ -141,17 +128,20 @@ conn.execute("INSERT INTO users (name, email) VALUES (?, ?)", (name, email))
 ### 3. SELECT — Read/find data
 
 ```sql
--- Get ALL users
-SELECT * FROM users;
+-- Get ALL tasks
+SELECT * FROM tasks;
 
--- Get one user by ID
-SELECT * FROM users WHERE id = 1;
+-- Get one task by ID
+SELECT * FROM tasks WHERE id = 1;
 
 -- Get only pending tasks
 SELECT * FROM tasks WHERE status = 'pending';
 
 -- Get specific columns only
 SELECT title, status FROM tasks;
+
+-- Get tasks ordered by newest first
+SELECT * FROM tasks ORDER BY id DESC;
 ```
 
 **Word by word:**
@@ -159,29 +149,30 @@ SELECT title, status FROM tasks;
 | SQL | Meaning |
 |-----|---------|
 | `SELECT *` | Get ALL columns |
-| `FROM users` | From the users table |
+| `FROM tasks` | From the tasks table |
 | `WHERE id = 1` | Only rows where id equals 1 |
+| `ORDER BY id DESC` | Sort by id, newest first |
 
 **Python code:**
 
 ```python
-# Get all users
-def get_all_users():
+# Get all tasks
+def get_all_tasks():
     conn = get_db()
-    users = conn.execute("SELECT * FROM users").fetchall()
+    tasks = conn.execute("SELECT * FROM tasks ORDER BY id DESC").fetchall()
     # .fetchall() returns a list of ALL matching rows
     conn.close()
-    return users
+    return tasks
 
-# Get one user
-def get_user_by_id(user_id):
+# Get one task
+def get_task_by_id(task_id):
     conn = get_db()
-    user = conn.execute(
-        "SELECT * FROM users WHERE id = ?", (user_id,)
+    task = conn.execute(
+        "SELECT * FROM tasks WHERE id = ?", (task_id,)
     ).fetchone()
     # .fetchone() returns ONE row (or None if not found)
     conn.close()
-    return user
+    return task
 ```
 
 ---
@@ -254,9 +245,9 @@ def delete_task(task_id):
 
 | Command | What it does | Example |
 |---------|-------------|---------|
-| `CREATE TABLE` | Make a new table | `CREATE TABLE users (...)` |
-| `INSERT INTO` | Add a row | `INSERT INTO users VALUES (...)` |
-| `SELECT` | Read rows | `SELECT * FROM users WHERE id = 1` |
+| `CREATE TABLE` | Make a new table | `CREATE TABLE tasks (...)` |
+| `INSERT INTO` | Add a row | `INSERT INTO tasks VALUES (...)` |
+| `SELECT` | Read rows | `SELECT * FROM tasks WHERE id = 1` |
 | `UPDATE` | Change a row | `UPDATE tasks SET status = 'done' WHERE id = 1` |
 | `DELETE` | Remove a row | `DELETE FROM tasks WHERE id = 1` |
 
@@ -269,7 +260,7 @@ def delete_task(task_id):
 | Forgetting `conn.commit()` | Changes are not saved | Always call `commit()` after INSERT/UPDATE/DELETE |
 | Missing `WHERE` in UPDATE/DELETE | Changes ALL rows! | Always specify which row to change |
 | Using f-strings for SQL values | SQL injection vulnerability | Use `?` placeholders |
-| Forgetting the comma in `(user_id,)` | Python error — not a tuple | Single-element tuples need a trailing comma |
+| Forgetting the comma in `(task_id,)` | Python error — not a tuple | Single-element tuples need a trailing comma |
 | Not closing connection | Resource leak | Always call `conn.close()` |
 
 ---
@@ -282,8 +273,8 @@ def delete_task(task_id):
    conn = sqlite3.connect("tasks.db")
    conn.row_factory = sqlite3.Row
    ```
-2. Run `SELECT * FROM users` and print the results.
-3. Insert a new user with SQL, then select all users to verify.
+2. Run `SELECT * FROM tasks` and print the results.
+3. Insert a new task with SQL, then select all tasks to verify.
 4. Update a task's status and verify with SELECT.
 
 ---
@@ -311,8 +302,8 @@ def delete_task(task_id):
 
 | # | Syllabus Point | Status | Demonstrated |
 |---|---------------|--------|-------------|
-| 1 | CREATE | Done | `CREATE TABLE users/tasks` in init_db() |
-| 2 | INSERT | Done | `INSERT INTO users/tasks` in create_user/create_task |
+| 1 | CREATE | Done | `CREATE TABLE tasks` in init_db() |
+| 2 | INSERT | Done | `INSERT INTO tasks` in create_task() |
 | 3 | SELECT | Done | `SELECT * FROM` in all get_ functions |
 | 4 | UPDATE | Done | `UPDATE tasks SET` in update_task() |
 | 5 | DELETE | Done | `DELETE FROM tasks` in delete_task() |

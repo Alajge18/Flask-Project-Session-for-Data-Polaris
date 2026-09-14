@@ -18,7 +18,7 @@ import sqlite3
 DATABASE = "tasks.db"
 # The name of our database file
 # This file is created automatically when you first run the app
-# All your data (users, tasks) is stored here permanently
+# All your data (tasks) is stored here permanently
 
 
 def get_db():
@@ -33,22 +33,16 @@ def get_db():
     # Returns a connection object that we use to send SQL commands
 
     conn.row_factory = sqlite3.Row
-    # By default, SQLite returns data as tuples: (1, "Alice", "alice@example.com")
-    # With Row factory, we can access columns by name: row["name"] → "Alice"
+    # By default, SQLite returns data as tuples: (1, "Learn Flask", "...")
+    # With Row factory, we can access columns by name: row["title"] → "Learn Flask"
     # This makes our code much more readable
-
-    conn.execute("PRAGMA foreign_keys = ON")
-    # SQLite has foreign keys DISABLED by default (for backward compatibility)
-    # This line turns them ON so that:
-    #   - You can't create a task with user_id=99 if user 99 doesn't exist
-    #   - The database enforces relationships between tables
 
     return conn
 
 
 def init_db():
     """
-    Create the users and tasks tables if they don't exist yet.
+    Create the tasks table if it doesn't exist yet.
     
     This runs once when the app starts.
     IF NOT EXISTS means: only create the table if it's not already there.
@@ -57,20 +51,6 @@ def init_db():
     conn = get_db()       # Step 1: Connect to the database
     cursor = conn.cursor() # Step 2: Create a cursor (a tool to execute SQL)
 
-    # --- Create the USERS table ---
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            email TEXT NOT NULL
-        )
-    """)
-    # id     → Unique number for each user, auto-increments (1, 2, 3...)
-    # name   → The user's name. NOT NULL means it can't be empty.
-    # email  → The user's email. NOT NULL means it can't be empty.
-    # PRIMARY KEY → This column uniquely identifies each row
-    # AUTOINCREMENT → SQLite automatically assigns the next number
-
     # --- Create the TASKS table ---
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS tasks (
@@ -78,87 +58,17 @@ def init_db():
             title TEXT NOT NULL,
             description TEXT,
             status TEXT NOT NULL DEFAULT 'pending',
-            user_id INTEGER NOT NULL,
-            FOREIGN KEY (user_id) REFERENCES users (id)
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
+    # id          → Unique number for each task, auto-increments (1, 2, 3...)
     # title       → Task title. Required (NOT NULL).
     # description → Optional details. Can be empty (no NOT NULL).
     # status      → Current state. Defaults to 'pending' if not specified.
-    # user_id     → Which user owns this task. Required.
-    # FOREIGN KEY → user_id MUST match an existing id in the users table
-    #               This is how we connect tasks to users
+    # created_at  → When the task was created (auto-filled by the database)
 
     conn.commit()  # Save the changes to the database file
     conn.close()   # Close the connection (free up resources)
-
-
-# ============================================================
-# USER FUNCTIONS — Create and Read users
-# ============================================================
-
-def get_all_users():
-    """
-    Get all users from the database.
-    
-    SQL: SELECT * FROM users
-    Translation: "Give me ALL columns (*) FROM the users table"
-    
-    Returns: A list of user rows
-    """
-    conn = get_db()
-    users = conn.execute("SELECT * FROM users").fetchall()
-    # .execute() runs the SQL command
-    # .fetchall() gets ALL matching rows as a list
-    conn.close()
-    return users
-
-
-def get_user_by_id(user_id):
-    """
-    Get one user by their ID.
-    
-    SQL: SELECT * FROM users WHERE id = ?
-    Translation: "Give me the user WHERE their id equals this number"
-    
-    The ? is a placeholder. We pass the actual value as a tuple (user_id,)
-    This prevents SQL injection attacks (hackers inserting malicious SQL).
-    
-    Returns: One user row, or None if not found
-    """
-    conn = get_db()
-    user = conn.execute(
-        "SELECT * FROM users WHERE id = ?",
-        (user_id,)  # The comma after user_id makes it a tuple — Python requires this
-    ).fetchone()
-    # .fetchone() gets just ONE row (or None if no match)
-    conn.close()
-    return user
-
-
-def create_user(name, email):
-    """
-    Insert a new user into the database.
-    
-    SQL: INSERT INTO users (name, email) VALUES (?, ?)
-    Translation: "Add a new row to users with these name and email values"
-    
-    Returns: The ID of the newly created user
-    """
-    conn = get_db()
-    cursor = conn.execute(
-        "INSERT INTO users (name, email) VALUES (?, ?)",
-        (name, email)  # These values replace the ? placeholders in order
-    )
-    conn.commit()  # IMPORTANT: commit() saves the change permanently
-    # Without commit(), the INSERT would be lost when the connection closes
-
-    user_id = cursor.lastrowid
-    # lastrowid gives us the auto-generated ID of the row we just inserted
-    # For example, if we have users 1 and 2, the new user gets id=3
-
-    conn.close()
-    return user_id
 
 
 # ============================================================
@@ -167,13 +77,16 @@ def create_user(name, email):
 
 def get_all_tasks():
     """
-    Get all tasks from the database.
+    Get all tasks from the database, ordered by newest first.
     
-    SQL: SELECT * FROM tasks
+    SQL: SELECT * FROM tasks ORDER BY id DESC
     Returns: A list of all task rows
     """
     conn = get_db()
-    tasks = conn.execute("SELECT * FROM tasks").fetchall()
+    tasks = conn.execute("SELECT * FROM tasks ORDER BY id DESC").fetchall()
+    # .execute() runs the SQL command
+    # .fetchall() gets ALL matching rows as a list
+    # ORDER BY id DESC → newest tasks appear first
     conn.close()
     return tasks
 
@@ -189,44 +102,82 @@ def get_task_by_id(task_id):
     task = conn.execute(
         "SELECT * FROM tasks WHERE id = ?",
         (task_id,)
+        # The ? is a placeholder. We pass the actual value as a tuple (task_id,)
+        # This prevents SQL injection attacks (hackers inserting malicious SQL).
+        # The comma after task_id makes it a tuple — Python requires this
     ).fetchone()
+    # .fetchone() gets just ONE row (or None if no match)
     conn.close()
     return task
 
 
 def get_tasks_by_status(status):
     """
-    Get tasks filtered by their status.
+    Get tasks filtered by their status, ordered by newest first.
     
-    SQL: SELECT * FROM tasks WHERE status = ?
+    SQL: SELECT * FROM tasks WHERE status = ? ORDER BY id DESC
     Example: get_tasks_by_status("pending") → only pending tasks
     
     Returns: A list of matching task rows
     """
     conn = get_db()
     tasks = conn.execute(
-        "SELECT * FROM tasks WHERE status = ?",
+        "SELECT * FROM tasks WHERE status = ? ORDER BY id DESC",
         (status,)
     ).fetchall()
     conn.close()
     return tasks
 
 
-def create_task(title, description, status, user_id):
+def get_task_counts():
+    """
+    Get the count of tasks grouped by status.
+    
+    Returns a dictionary with:
+      {"total": 10, "pending": 4, "in_progress": 3, "completed": 3}
+    """
+    conn = get_db()
+
+    total = conn.execute("SELECT COUNT(*) FROM tasks").fetchone()[0]
+    pending = conn.execute(
+        "SELECT COUNT(*) FROM tasks WHERE status = 'pending'"
+    ).fetchone()[0]
+    in_progress = conn.execute(
+        "SELECT COUNT(*) FROM tasks WHERE status = 'in_progress'"
+    ).fetchone()[0]
+    completed = conn.execute(
+        "SELECT COUNT(*) FROM tasks WHERE status = 'completed'"
+    ).fetchone()[0]
+
+    conn.close()
+    return {
+        "total": total,
+        "pending": pending,
+        "in_progress": in_progress,
+        "completed": completed
+    }
+
+
+def create_task(title, description, status):
     """
     Insert a new task into the database.
     
-    SQL: INSERT INTO tasks (title, description, status, user_id) VALUES (?, ?, ?, ?)
+    SQL: INSERT INTO tasks (title, description, status) VALUES (?, ?, ?)
     
     Returns: The ID of the newly created task
     """
     conn = get_db()
     cursor = conn.execute(
-        "INSERT INTO tasks (title, description, status, user_id) VALUES (?, ?, ?, ?)",
-        (title, description, status, user_id)
+        "INSERT INTO tasks (title, description, status) VALUES (?, ?, ?)",
+        (title, description, status)
+        # These values replace the ? placeholders in order
     )
-    conn.commit()  # Save the new task permanently
-    task_id = cursor.lastrowid  # Get the auto-generated ID
+    conn.commit()  # IMPORTANT: commit() saves the change permanently
+    # Without commit(), the INSERT would be lost when the connection closes
+
+    task_id = cursor.lastrowid
+    # lastrowid gives us the auto-generated ID of the row we just inserted
+
     conn.close()
     return task_id
 
@@ -237,8 +188,6 @@ def update_task(task_id, title, description, status):
     
     SQL: UPDATE tasks SET title=?, description=?, status=? WHERE id=?
     Translation: "Change these columns WHERE the id matches"
-    
-    Note: We don't update user_id — a task stays with its original user.
     """
     conn = get_db()
     conn.execute(

@@ -76,8 +76,8 @@ Flask-WTF uses the SECRET_KEY to create CSRF tokens. Without it, forms won't wor
 
 ```python
 from flask_wtf import FlaskForm
-from wtforms import StringField, TextAreaField, SelectField, IntegerField, SubmitField
-from wtforms.validators import DataRequired, NumberRange
+from wtforms import StringField, TextAreaField, SelectField, SubmitField
+from wtforms.validators import DataRequired
 
 
 class AddTaskForm(FlaskForm):
@@ -89,10 +89,6 @@ class AddTaskForm(FlaskForm):
         ("pending", "Pending"),
         ("in_progress", "In Progress"),
         ("completed", "Completed")
-    ])
-    user_id = IntegerField("User ID", validators=[
-        DataRequired(message="User ID is required."),
-        NumberRange(min=1, message="Must be a positive number.")
     ])
     submit = SubmitField("Add Task")
 
@@ -108,16 +104,6 @@ class EditTaskForm(FlaskForm):
         ("completed", "Completed")
     ])
     submit = SubmitField("Update Task")
-
-
-class AddUserForm(FlaskForm):
-    name = StringField("Name", validators=[
-        DataRequired(message="Name is required.")
-    ])
-    email = StringField("Email", validators=[
-        DataRequired(message="Email is required.")
-    ])
-    submit = SubmitField("Add User")
 ```
 
 ---
@@ -126,13 +112,10 @@ class AddUserForm(FlaskForm):
 
 | Field Type | HTML Element | Example |
 |-----------|-------------|---------|
-| `StringField` | `<input type="text">` | Title, Name, Email |
+| `StringField` | `<input type="text">` | Title |
 | `TextAreaField` | `<textarea>` | Description |
 | `SelectField` | `<select>` dropdown | Status (Pending/In Progress/Completed) |
-| `IntegerField` | `<input type="number">` | User ID |
 | `SubmitField` | `<button type="submit">` | Add Task, Update Task |
-| `PasswordField` | `<input type="password">` | (not used in TaskFlow) |
-| `BooleanField` | `<input type="checkbox">` | (not used in TaskFlow) |
 
 ---
 
@@ -227,7 +210,6 @@ def edit_task(task_id):
 
 1. Add a `Length(min=3)` validator to the task title so titles must be at least 3 characters.
 2. Try submitting a task with a 1-character title and observe the error.
-3. Add an `Email()` validator to the user email field (install `email-validator` first).
 
 ---
 
@@ -256,9 +238,9 @@ def edit_task(task_id):
 |---|---------------|--------|-------------|
 | 1 | Flask-WTF | Done | `FlaskForm` base class used |
 | 2 | WTForms | Done | All field types imported from wtforms |
-| 3 | Form classes | Done | `AddTaskForm`, `EditTaskForm`, `AddUserForm` |
-| 4 | Fields | Done | StringField, TextAreaField, SelectField, etc. |
-| 5 | Validators / DataRequired | Done | DataRequired, NumberRange |
+| 3 | Form classes | Done | `AddTaskForm`, `EditTaskForm` |
+| 4 | Fields | Done | StringField, TextAreaField, SelectField |
+| 5 | Validators / DataRequired | Done | DataRequired |
 | 6 | CSRF protection | Done | SECRET_KEY + hidden_tag() |
 | 7 | Validation errors | Done | Error display in templates |
 
