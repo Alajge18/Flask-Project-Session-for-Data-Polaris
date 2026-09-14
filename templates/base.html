@@ -4,7 +4,7 @@
 <!-- Every other template "extends" this file.                     -->
 <!-- This means: base.html provides the common structure           -->
 <!-- (navigation, head, body), and child templates fill in         -->
-<!-- the {% block content %} section with their own content.       -->
+<!-- the content block section with their own content.           -->
 <!--                                                               -->
 <!-- This is called TEMPLATE INHERITANCE (like a parent-child).    -->
 <!-- It prevents us from repeating the nav bar in every HTML file. -->
@@ -70,20 +70,20 @@
             {% endif %}
         {% endwith %}
 
-        <!-- ===== Page Content ===== -->
-        <!-- 
-            {% block content %}{% endblock %}
+        {# ===== Page Content ===== #}
+        {# 
+            block content / endblock
             
             This is a PLACEHOLDER. Each child template replaces this block
             with its own content. For example:
             
             In index.html:
-                {% block content %}
+                block content
                     <h1>Welcome to TaskFlow</h1>
-                {% endblock %}
+                endblock
             
             The result: base.html's structure + index.html's content = complete page.
-        -->
+        #}
         {% block content %}{% endblock %}
 
     </div>
