@@ -1,0 +1,64 @@
+<!-- ============================================================ -->
+<!-- add_task.html — Form to Add a New Task                       -->
+<!-- ============================================================ -->
+<!-- Similar to add_user.html but with more fields.               -->
+<!-- Flask-WTF handles validation and CSRF protection.            -->
+<!-- ============================================================ -->
+
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Add New Task</h1>
+
+<form method="POST">
+    {{ form.hidden_tag() }}
+    <!-- CSRF token — required for security -->
+
+    <!-- ===== Title Field (required) ===== -->
+    <div class="form-group">
+        {{ form.title.label }}
+        {{ form.title(size=40) }}
+        {% for error in form.title.errors %}
+            <span class="error">{{ error }}</span>
+        {% endfor %}
+    </div>
+
+    <!-- ===== Description Field (optional) ===== -->
+    <div class="form-group">
+        {{ form.description.label }}
+        {{ form.description(rows=4, cols=40) }}
+        <!-- rows=4 makes the textarea 4 lines tall -->
+        {% for error in form.description.errors %}
+            <span class="error">{{ error }}</span>
+        {% endfor %}
+    </div>
+
+    <!-- ===== Status Dropdown (required) ===== -->
+    <div class="form-group">
+        {{ form.status.label }}
+        {{ form.status() }}
+        <!-- 
+            This renders a <select> dropdown with options:
+            <option value="pending">Pending</option>
+            <option value="in_progress">In Progress</option>
+            <option value="completed">Completed</option>
+            The choices come from forms.py SelectField
+        -->
+        {% for error in form.status.errors %}
+            <span class="error">{{ error }}</span>
+        {% endfor %}
+    </div>
+
+    <!-- ===== User ID Field (required) ===== -->
+    <div class="form-group">
+        {{ form.user_id.label }}
+        {{ form.user_id() }}
+        <!-- Must be an existing user's ID. app.py checks this before saving. -->
+        {% for error in form.user_id.errors %}
+            <span class="error">{{ error }}</span>
+        {% endfor %}
+    </div>
+
+    {{ form.submit(class="btn") }}
+</form>
+{% endblock %}

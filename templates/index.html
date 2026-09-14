@@ -1,0 +1,24 @@
+<!-- ============================================================ -->
+<!-- index.html — Homepage                                        -->
+<!-- ============================================================ -->
+<!-- This page shows a welcome message and quick navigation.      -->
+<!-- {% extends "base.html" %} means: use base.html as the        -->
+<!-- parent template and fill in the content block below.          -->
+<!-- ============================================================ -->
+
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Everything inside this block replaces {% block content %} in base.html -->
+
+<h1>Welcome to TaskFlow</h1>
+<p>A simple task management system built with Flask.</p>
+
+<!-- Quick navigation buttons -->
+<div class="actions">
+    <a href="{{ url_for('tasks') }}" class="btn">View Tasks</a>
+    <a href="{{ url_for('add_task') }}" class="btn">Add Task</a>
+    <a href="{{ url_for('users') }}" class="btn">View Users</a>
+</div>
+
+{% endblock %}

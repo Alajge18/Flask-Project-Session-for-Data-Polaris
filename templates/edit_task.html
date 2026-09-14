@@ -1,0 +1,63 @@
+<!-- ============================================================ -->
+<!-- edit_task.html — Form to Edit an Existing Task               -->
+<!-- ============================================================ -->
+<!-- Similar to add_task.html, but the form is PRE-FILLED          -->
+<!-- with the task's current data.                                 -->
+<!--                                                               -->
+<!-- In app.py, on GET request:                                    -->
+<!--   form.title.data = task["title"]    ← fills the title field  -->
+<!--   form.status.data = task["status"]  ← selects the status     -->
+<!--                                                               -->
+<!-- On POST (submit): saves the updated data to the database.    -->
+<!-- ============================================================ -->
+
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1>Edit Task #{{ task.id }}</h1>
+<!-- Shows which task we're editing -->
+
+<form method="POST">
+    {{ form.hidden_tag() }}
+    <!-- CSRF token — always required for form security -->
+
+    <!-- ===== Title Field ===== -->
+    <div class="form-group">
+        {{ form.title.label }}
+        {{ form.title(size=40) }}
+        <!-- This field is pre-filled with the current title -->
+        {% for error in form.title.errors %}
+            <span class="error">{{ error }}</span>
+        {% endfor %}
+    </div>
+
+    <!-- ===== Description Field ===== -->
+    <div class="form-group">
+        {{ form.description.label }}
+        {{ form.description(rows=4, cols=40) }}
+        <!-- Pre-filled with the current description -->
+        {% for error in form.description.errors %}
+            <span class="error">{{ error }}</span>
+        {% endfor %}
+    </div>
+
+    <!-- ===== Status Dropdown ===== -->
+    <div class="form-group">
+        {{ form.status.label }}
+        {{ form.status() }}
+        <!-- The current status is pre-selected in the dropdown -->
+        {% for error in form.status.errors %}
+            <span class="error">{{ error }}</span>
+        {% endfor %}
+    </div>
+
+    <!-- Note: No user_id field here — we don't change task ownership when editing -->
+
+    {{ form.submit(class="btn") }}
+</form>
+
+<a href="{{ url_for('task_detail', task_id=task.id) }}">Cancel</a>
+<!-- Cancel link → goes back to the task detail page without saving changes -->
+
+{% endblock %}

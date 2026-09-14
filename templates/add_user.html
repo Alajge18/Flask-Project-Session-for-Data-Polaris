@@ -1,0 +1,53 @@
+<!-- ============================================================ -->
+<!-- add_user.html — Form to Add a New User                       -->
+<!-- ============================================================ -->
+<!-- Uses Flask-WTF to render the form and show validation errors. -->
+<!-- The 'form' variable comes from app.py:                       -->
+<!--   form = AddUserForm()                                        -->
+<!--   return render_template("add_user.html", form=form)          -->
+<!-- ============================================================ -->
+
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Add New User</h1>
+
+<!-- method="POST" means: send the form data in the request body (not the URL) -->
+<form method="POST">
+
+    {{ form.hidden_tag() }}
+    <!-- 
+        hidden_tag() adds a hidden CSRF token field.
+        CSRF (Cross-Site Request Forgery) protection prevents
+        other websites from submitting fake forms to our app.
+        Flask-WTF checks this token on every POST request.
+    -->
+
+    <!-- ===== Name Field ===== -->
+    <div class="form-group">
+        {{ form.name.label }}
+        <!-- Renders: <label for="name">Name</label> -->
+
+        {{ form.name(size=40) }}
+        <!-- Renders: <input type="text" name="name" size="40"> -->
+
+        {% for error in form.name.errors %}
+            <span class="error">{{ error }}</span>
+            <!-- If validation fails, this shows: "Name is required." in red -->
+        {% endfor %}
+    </div>
+
+    <!-- ===== Email Field ===== -->
+    <div class="form-group">
+        {{ form.email.label }}
+        {{ form.email(size=40) }}
+        {% for error in form.email.errors %}
+            <span class="error">{{ error }}</span>
+        {% endfor %}
+    </div>
+
+    {{ form.submit(class="btn") }}
+    <!-- Renders: <input type="submit" value="Add User" class="btn"> -->
+
+</form>
+{% endblock %}
