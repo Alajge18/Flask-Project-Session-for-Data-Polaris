@@ -33,21 +33,7 @@
         {% endfor %}
     </div>
 
-    <!-- ===== Status Dropdown (required) ===== -->
-    <div class="form-group">
-        {{ form.status.label }}
-        {{ form.status() }}
-        <!-- 
-            This renders a <select> dropdown with options:
-            <option value="pending">Pending</option>
-            <option value="in_progress">In Progress</option>
-            <option value="completed">Completed</option>
-            The choices come from forms.py SelectField
-        -->
-        {% for error in form.status.errors %}
-            <span class="error">{{ error }}</span>
-        {% endfor %}
-    </div>
+    <!-- Status is automatically set to "pending" — no dropdown needed -->
 
     {{ form.submit(class="btn") }}
 </form>

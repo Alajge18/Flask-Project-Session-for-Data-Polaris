@@ -81,19 +81,17 @@ from wtforms.validators import DataRequired
 
 
 class AddTaskForm(FlaskForm):
+    """Form to add a new task. Status is NOT included — new tasks always start as pending."""
     title = StringField("Title", validators=[
         DataRequired(message="Title is required.")
     ])
     description = TextAreaField("Description")
-    status = SelectField("Status", choices=[
-        ("pending", "Pending"),
-        ("in_progress", "In Progress"),
-        ("completed", "Completed")
-    ])
+    # No status field — new tasks automatically go to "pending"
     submit = SubmitField("Add Task")
 
 
 class EditTaskForm(FlaskForm):
+    """Form to edit an existing task. Includes status dropdown so users can change it."""
     title = StringField("Title", validators=[
         DataRequired(message="Title is required.")
     ])
@@ -106,15 +104,18 @@ class EditTaskForm(FlaskForm):
     submit = SubmitField("Update Task")
 ```
 
+> **Design Decision**: The Add form intentionally omits the status dropdown.
+> New tasks should always start as "pending" — the user only picks a status when editing later.
+
 ---
 
 ## D. Field Types Reference
 
-| Field Type | HTML Element | Example |
-|-----------|-------------|---------|
-| `StringField` | `<input type="text">` | Title |
-| `TextAreaField` | `<textarea>` | Description |
-| `SelectField` | `<select>` dropdown | Status (Pending/In Progress/Completed) |
+| Field Type | HTML Element | Used In |
+|-----------|-------------|--------|
+| `StringField` | `<input type="text">` | Title (Add + Edit) |
+| `TextAreaField` | `<textarea>` | Description (Add + Edit) |
+| `SelectField` | `<select>` dropdown | Status (**Edit only**) |
 | `SubmitField` | `<button type="submit">` | Add Task, Update Task |
 
 ---
@@ -238,8 +239,8 @@ def edit_task(task_id):
 |---|---------------|--------|-------------|
 | 1 | Flask-WTF | Done | `FlaskForm` base class used |
 | 2 | WTForms | Done | All field types imported from wtforms |
-| 3 | Form classes | Done | `AddTaskForm`, `EditTaskForm` |
-| 4 | Fields | Done | StringField, TextAreaField, SelectField |
+| 3 | Form classes | Done | `AddTaskForm` (no status), `EditTaskForm` (with status) |
+| 4 | Fields | Done | StringField, TextAreaField, SelectField (edit only) |
 | 5 | Validators / DataRequired | Done | DataRequired |
 | 6 | CSRF protection | Done | SECRET_KEY + hidden_tag() |
 | 7 | Validation errors | Done | Error display in templates |

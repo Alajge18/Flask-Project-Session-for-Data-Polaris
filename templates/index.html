@@ -10,24 +10,26 @@
 {% block content %}
 
 
-<h1>Welcome to TaskFlow</h1>
-<p>Your personal task management system.</p>
+<div class="welcome-header">
+    <h1>Welcome to TaskFlow</h1>
+    <p>Your personal task management system.</p>
+</div>
 
 <!-- Task stats cards -->
 <div class="stats">
-    <div class="stat-card">
+    <div class="stat-card total">
         <h3>{{ counts.total }}</h3>
         <p>Total Tasks</p>
     </div>
-    <div class="stat-card">
+    <div class="stat-card pending">
         <h3>{{ counts.pending }}</h3>
         <p>Pending</p>
     </div>
-    <div class="stat-card">
+    <div class="stat-card in_progress">
         <h3>{{ counts.in_progress }}</h3>
         <p>In Progress</p>
     </div>
-    <div class="stat-card">
+    <div class="stat-card completed">
         <h3>{{ counts.completed }}</h3>
         <p>Completed</p>
     </div>
@@ -35,8 +37,10 @@
 
 <!-- Quick navigation buttons -->
 <div class="actions">
-    <a href="{{ url_for('tasks') }}" class="btn">View Tasks</a>
-    <a href="{{ url_for('add_task') }}" class="btn">Add Task</a>
+    <a href="{{ url_for('add_task') }}" class="btn">+ Add Task</a>
+    <a href="{{ url_for('tasks') }}" class="btn btn-secondary">View All Tasks</a>
+    <a href="{{ url_for('tasks', status='pending') }}" class="btn btn-outline">View Pending ({{ counts.pending }})</a>
 </div>
 
 {% endblock %}
+

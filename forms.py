@@ -37,8 +37,10 @@ class AddTaskForm(FlaskForm):
     Fields:
       - title: Required text field for the task name
       - description: Optional text area for details
-      - status: Dropdown with three choices
       - submit: The submit button
+    
+    Note: Status is NOT included here — new tasks always start as "pending".
+    Users can change the status later using the Edit form.
     """
     title = StringField(
         "Title",  # The label shown next to the field
@@ -51,15 +53,7 @@ class AddTaskForm(FlaskForm):
         # No validators → this field is optional
     )
 
-    status = SelectField(
-        "Status",
-        choices=[
-            ("pending", "Pending"),           # (value_saved, text_displayed)
-            ("in_progress", "In Progress"),   # "in_progress" is saved to database
-            ("completed", "Completed")        # "Completed" is shown to the user
-        ],
-        validators=[DataRequired()]
-    )
+    # No status field — new tasks automatically go to "pending"
 
     submit = SubmitField("Add Task")
     # This creates the submit button with the text "Add Task"

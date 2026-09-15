@@ -12,6 +12,7 @@
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <!-- charset="UTF-8" tells the browser to support all characters (emojis, symbols) -->
@@ -29,6 +30,7 @@
         Why use url_for? It always generates the correct path, even if you move files.
     -->
 </head>
+
 <body>
 
     <!-- ===== Navigation Bar ===== -->
@@ -59,33 +61,34 @@
             category = "success" or "error" — used for green or red styling.
         -->
         {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="flash {{ category }}">{{ message }}</div>
-                    <!-- 
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="flash {{ category }}">{{ message }}</div>
+        <!-- 
                         {{ category }} becomes "success" or "error" → CSS class for color
                         {{ message }} becomes "Task created!" → the actual text shown
                     -->
-                {% endfor %}
-            {% endif %}
+        {% endfor %}
+        {% endif %}
         {% endwith %}
 
         {# ===== Page Content ===== #}
-        {# 
-            block content / endblock
-            
-            This is a PLACEHOLDER. Each child template replaces this block
-            with its own content. For example:
-            
-            In index.html:
-                block content
-                    <h1>Welcome to TaskFlow</h1>
-                endblock
-            
-            The result: base.html's structure + index.html's content = complete page.
+        {#
+        block content / endblock
+
+        This is a PLACEHOLDER. Each child template replaces this block
+        with its own content. For example:
+
+        In index.html:
+        block content
+        <h1>Welcome to TaskFlow</h1>
+        endblock
+
+        The result: base.html's structure + index.html's content = complete page.
         #}
         {% block content %}{% endblock %}
 
     </div>
 </body>
+
 </html>

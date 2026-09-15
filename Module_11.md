@@ -215,16 +215,58 @@ Flask checks each route:
 5. **"Difference between `<name>` and `<int:task_id>`?"**
    - `<name>` accepts any text. `<int:task_id>` only accepts integers.
 
+6. **"What is the difference between `/tasks/search` and `/tasks/<int:task_id>`?"**
+   - `/tasks/search` is a **static** route — the word "search" is fixed in the URL.
+   - `/tasks/<int:task_id>` is a **dynamic** route — the number changes per task.
+   - Flask matches static routes first, so `/tasks/search` won't clash with `/tasks/3`.
+
 ---
 
-## J. Module 11 Completion Checklist
+## J. New Route Added — Task Search
+
+We added a new route `/tasks/search` to support task searching:
+
+```python
+# In app.py:
+@app.route("/tasks/search")
+def search():
+    """
+    Search tasks by title or description.
+    GET /tasks/search?q=flask → finds tasks containing "flask"
+    """
+    query = request.args.get("q", "").strip()
+    status = request.args.get("status", "").strip()
+
+    if not query:
+        return redirect(url_for("tasks"))  # Nothing typed → show all tasks
+
+    results = search_tasks(query)
+    return render_template("tasks.html", tasks=results, search_query=query, current_status=None)
+```
+
+### Route Summary Table (All TaskFlow Routes)
+
+| Route | Type | Method | Purpose |
+|-------|------|--------|---------|
+| `/` | Static | GET | Dashboard/homepage |
+| `/tasks` | Static | GET | List all tasks (filter by ?status=) |
+| `/tasks/search` | Static | GET | **Search tasks by ?q=** |
+| `/tasks/add` | Static | GET+POST | Show form / save new task |
+| `/tasks/<int:task_id>` | Dynamic | GET | View one task |
+| `/tasks/<int:task_id>/edit` | Dynamic | GET+POST | Edit a task |
+| `/tasks/<int:task_id>/delete` | Dynamic | GET | Delete a task |
+
+---
+
+## K. Module 11 Completion Checklist
 
 | # | Syllabus Point | Status | Demonstrated |
 |---|---------------|--------|-------------|
-| 1 | Static routes | Done | `/`, `/tasks` |
+| 1 | Static routes | Done | `/`, `/tasks`, `/tasks/search` |
 | 2 | Dynamic routes | Done | `/tasks/<int:task_id>`, etc. |
 | 3 | URL parameters | Done | `task_id` in routes |
 | 4 | Route converters | Done | `int:`, `string` (default) |
 | 5 | `@app.route()` | Done | Used in all routes |
 
 **All 5 syllabus points for Module 11 are covered.**
+

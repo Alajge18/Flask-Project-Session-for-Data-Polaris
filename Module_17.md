@@ -296,6 +296,68 @@ def delete_task(task_id):
 5. **"What's the difference between `fetchone()` and `fetchall()`?"**
    - `fetchone()` returns one row (or None). `fetchall()` returns a list of all matching rows.
 
+6. **"What does LIKE do? What is the % wildcard?"**
+   - `LIKE` does a pattern search. `%` means "any characters". So `%flask%` matches anything containing "flask".
+
+---
+
+## H. SQL LIKE — Searching Tasks
+
+We added a **search feature** to TaskFlow. It uses the SQL `LIKE` operator.
+
+### How LIKE Works
+
+```sql
+-- Find all tasks where title contains "flask"
+SELECT * FROM tasks WHERE title LIKE '%flask%';
+
+-- % is a wildcard: matches any number of any characters
+-- '%flask%' → matches "Learn Flask", "Flask routes", "My flask notes"
+-- 'flask%'  → matches only titles that START with "flask"
+-- '%flask'  → matches only titles that END with "flask"
+```
+
+### In database.py — search_tasks()
+
+```python
+def search_tasks(query, status=None):
+    """
+    Search tasks where title or description contains the query.
+    Optionally filters by status.
+    """
+    conn = get_db()
+    pattern = f"%{query}%"
+    # f"%{query}%" wraps the query with % on both sides
+    # So searching "flask" becomes "%flask%" → matches anywhere in the text
+
+    if status:
+        tasks = conn.execute(
+            "SELECT * FROM tasks WHERE (title LIKE ? OR description LIKE ?) AND status = ? ORDER BY id DESC",
+            (pattern, pattern, status)
+        ).fetchall()
+    else:
+        tasks = conn.execute(
+            "SELECT * FROM tasks WHERE (title LIKE ? OR description LIKE ?) ORDER BY id DESC",
+            (pattern, pattern)
+        ).fetchall()
+
+    conn.close()
+    return tasks
+```
+
+### Step-by-Step: What Happens When You Search
+
+```
+Step 1: User types "flask" in the search box
+Step 2: Browser sends GET /tasks/search?q=flask
+Step 3: app.py reads: query = request.args.get("q") → "flask"
+Step 4: Calls search_tasks("flask")
+Step 5: database.py builds pattern = "%flask%"
+Step 6: SQL runs: WHERE title LIKE '%flask%' OR description LIKE '%flask%'
+Step 7: Returns all matching tasks
+Step 8: tasks.html shows the results
+```
+
 ---
 
 ## G. Module 17 Completion Checklist
@@ -307,5 +369,7 @@ def delete_task(task_id):
 | 3 | SELECT | Done | `SELECT * FROM` in all get_ functions |
 | 4 | UPDATE | Done | `UPDATE tasks SET` in update_task() |
 | 5 | DELETE | Done | `DELETE FROM tasks` in delete_task() |
+| 6 | LIKE / Search | Done | `WHERE title LIKE ?` in search_tasks() |
 
-**All 5 syllabus points for Module 17 are covered.**
+**All 6 syllabus points for Module 17 are covered.**
+

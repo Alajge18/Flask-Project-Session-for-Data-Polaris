@@ -158,6 +158,32 @@ def get_task_counts():
     }
 
 
+def search_tasks(query, status=None):
+    """
+    Search tasks where title or description contains the query.
+    Optionally filters by status.
+    
+    SQL: SELECT * FROM tasks WHERE (title LIKE ? OR description LIKE ?) ...
+    Returns: A list of matching task rows ordered by newest first
+    """
+    conn = get_db()
+    pattern = f"%{query}%"
+
+    if status and status in ("pending", "in_progress", "completed"):
+        tasks = conn.execute(
+            "SELECT * FROM tasks WHERE (title LIKE ? OR description LIKE ?) AND status = ? ORDER BY id DESC",
+            (pattern, pattern, status)
+        ).fetchall()
+    else:
+        tasks = conn.execute(
+            "SELECT * FROM tasks WHERE (title LIKE ? OR description LIKE ?) ORDER BY id DESC",
+            (pattern, pattern)
+        ).fetchall()
+
+    conn.close()
+    return tasks
+
+
 def create_task(title, description, status):
     """
     Insert a new task into the database.

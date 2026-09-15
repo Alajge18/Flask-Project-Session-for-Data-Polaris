@@ -87,7 +87,7 @@ def add_task():
         create_task(                        # Save to database
             form.title.data,
             form.description.data,
-            form.status.data
+            "pending"                       # New tasks always start as "pending"
         )
         flash("Task created!", "success")   # Show success message
         return redirect(url_for("tasks"))   # Go to task list
@@ -95,14 +95,19 @@ def add_task():
     return render_template("add_task.html", form=form)  # Show the form
 ```
 
+> **Note**: The Add Task form only has `title` and `description` fields.
+> Status is NOT shown to the user — it's automatically set to `"pending"`.
+> Users can change the status later using the Edit form.
+
 **Line-by-line:**
 
 | Line | What it does |
 |------|-------------|
 | `methods=["GET", "POST"]` | This route accepts both GET (show form) and POST (process form) |
-| `form = AddTaskForm()` | Creates the form object with all fields and validators |
+| `form = AddTaskForm()` | Creates the form object with title and description fields |
 | `form.validate_on_submit()` | Returns True only if: it's a POST AND all validators passed |
 | `form.title.data` | Gets the value the user typed in the title field |
+| `"pending"` | Status is hardcoded — user doesn't select it |
 | `flash("Task created!", "success")` | Stores a one-time message to show on the next page |
 | `redirect(url_for("tasks"))` | Sends the browser to `/tasks` |
 | Last `render_template` | Runs on GET request, or when validation fails |
@@ -181,13 +186,12 @@ STEP 1: User visits /tasks/add (GET request)
   → form.validate_on_submit() returns False (it's GET, not POST)
   → Flask renders add_task.html with an empty form
 
-STEP 2: User fills in the form and clicks "Add Task" (POST request)
+STEP 2: User fills in title and description, clicks "Add Task" (POST request)
   → Browser sends POST /tasks/add with form data in the body
   → Flask runs add_task() again
   → form.validate_on_submit() checks:
       ✓ Is it POST? Yes
       ✓ Is title filled? Yes
-      ✓ Is user_id valid? Yes
       ✓ Is CSRF token correct? Yes
   → Returns True
 

@@ -1,9 +1,9 @@
 <!-- ============================================================ -->
-<!-- tasks.html — List All Tasks (with status filter)             -->
+<!-- tasks.html — List All Tasks (with search + status filter)   -->
 <!-- ============================================================ -->
-<!-- Shows tasks in a table with Edit/Delete actions.              -->
-<!-- Users can filter by clicking Pending/In Progress/Completed.  -->
-<!-- The 'tasks' variable comes from app.py.                      -->
+<!-- Shows tasks in a table with Edit/Delete actions.            -->
+<!-- Users can search by title/description or filter by status.  -->
+<!-- The 'tasks' and 'search_query' variables come from app.py.  -->
 <!-- ============================================================ -->
 
 {% extends "base.html" %}
@@ -11,8 +11,37 @@
 {% block content %}
 <h1>All Tasks</h1>
 
+<!-- ===== Search Bar ===== -->
+<!--
+    GET /tasks/search?q=<query>
+    In app.py, request.args.get("q") reads the ?q=xxx part.
+    The search_tasks() function in database.py does a LIKE query.
+-->
+<form action="{{ url_for('search') }}" method="GET" style="margin-bottom: 12px;">
+    <input
+        type="text"
+        name="q"
+        id="search-input"
+        placeholder="Search tasks by title or description..."
+        value="{{ search_query }}"
+        style="padding: 8px; width: 70%; border: 1px solid #ccc;"
+    >
+    <button type="submit" class="btn" style="margin-left: 6px;">Search</button>
+    {% if search_query %}
+        <a href="{{ url_for('tasks') }}" class="btn" style="background:#6c757d; margin-left:4px;">Clear</a>
+    {% endif %}
+</form>
+
+<!-- ===== Search Results Notice ===== -->
+{% if search_query %}
+<p style="margin-bottom: 10px; color: #555;">
+    Showing results for: <strong>"{{ search_query }}"</strong>
+    ({{ tasks | length }} found)
+</p>
+{% endif %}
+
 <!-- ===== Status Filter Links ===== -->
-<!-- 
+<!--
     These links add ?status=xxx to the URL.
     url_for('tasks', status='pending') generates: /tasks?status=pending
     In app.py, request.args.get("status") reads this value.
@@ -25,7 +54,7 @@
     <a href="{{ url_for('tasks', status='completed') }}">Completed</a>
 </div>
 
-<a href="{{ url_for('add_task') }}" class="btn">Add New Task</a>
+<a href="{{ url_for('add_task') }}" class="btn">+ Add New Task</a>
 
 {% if tasks %}
 <table>
@@ -51,10 +80,10 @@
             <td>
                 <!-- Status badge with color based on status -->
                 <span class="badge {{ task.status }}">{{ task.status }}</span>
-                <!-- 
-                    class="badge pending" → yellow background (from CSS)
+                <!--
+                    class="badge pending"     → yellow background (from CSS)
                     class="badge in_progress" → blue background
-                    class="badge completed" → green background
+                    class="badge completed"   → green background
                 -->
             </td>
 
@@ -65,7 +94,7 @@
                 <!-- Delete link → deletes the task after confirmation -->
                 <a href="{{ url_for('delete_task_route', task_id=task.id) }}"
                    onclick="return confirm('Delete this task?')">Delete</a>
-                <!-- 
+                <!--
                     onclick="return confirm(...)" shows a browser popup asking
                     "Delete this task?" with OK/Cancel buttons.
                     If user clicks Cancel, the link is NOT followed.
@@ -77,7 +106,15 @@
 </table>
 
 {% else %}
-<p>No tasks found.</p>
+<p>No tasks found.
+    {% if search_query %}
+        Try a different search term or <a href="{{ url_for('tasks') }}">view all tasks</a>.
+    {% else %}
+        <a href="{{ url_for('add_task') }}">Add your first task!</a>
+    {% endif %}
+</p>
 {% endif %}
 
 {% endblock %}
+
+

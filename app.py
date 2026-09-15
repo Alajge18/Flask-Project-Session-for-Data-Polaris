@@ -17,7 +17,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, jso
 
 from database import init_db
 from database import get_all_tasks, get_task_by_id, get_tasks_by_status, get_task_counts
-from database import create_task, update_task, delete_task
+from database import create_task, update_task, delete_task, search_tasks
 # We import all our database functions from database.py
 # This keeps app.py clean — it doesn't need to know SQL
 
@@ -77,16 +77,44 @@ def tasks():
       /tasks              → shows ALL tasks
       /tasks?status=pending → shows only pending tasks
     """
-    # request.args.get("status") reads the ?status=xxx part from the URL
-    # If there's no ?status= in the URL, it returns None
     status = request.args.get("status")
 
     if status and status in VALID_STATUSES:
-        all_tasks = get_tasks_by_status(status)  # Get filtered tasks
+        all_tasks = get_tasks_by_status(status)
     else:
-        all_tasks = get_all_tasks()  # Get all tasks
+        all_tasks = get_all_tasks()
 
-    return render_template("tasks.html", tasks=all_tasks, current_status=status)
+    return render_template("tasks.html", tasks=all_tasks, current_status=status, search_query="")
+
+
+# --- Search Tasks ---
+@app.route("/tasks/search")
+def search():
+    """
+    Search tasks by title or description.
+
+    Examples:
+      /tasks/search?q=flask          → tasks matching 'flask'
+      /tasks/search?q=flask&status=pending → only pending tasks matching 'flask'
+    """
+    query = request.args.get("q", "").strip()
+    status = request.args.get("status", "").strip()
+
+    if not query:
+        return redirect(url_for("tasks"))
+
+    if status and status in VALID_STATUSES:
+        results = search_tasks(query, status=status)
+    else:
+        results = search_tasks(query)
+        status = None
+
+    return render_template(
+        "tasks.html",
+        tasks=results,
+        current_status=status,
+        search_query=query
+    )
 
 
 # --- View One Task ---
@@ -121,7 +149,7 @@ def add_task():
         create_task(
             form.title.data,        # Task title from the form
             form.description.data,  # Task description from the form
-            form.status.data        # Selected status from the dropdown
+            "pending"               # New tasks always start as "pending"
         )
         flash("Task created successfully!", "success")
         return redirect(url_for("tasks"))  # Go to task list

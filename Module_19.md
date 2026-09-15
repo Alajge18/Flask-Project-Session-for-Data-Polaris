@@ -57,10 +57,10 @@ TaskFlow/
 ├── templates/           ← HTML pages (Jinja2)
 │   ├── base.html       ← Parent template (nav, flash messages)
 │   ├── index.html      ← Homepage / Dashboard
-│   ├── tasks.html      ← Task list + status filter
-│   ├── add_task.html   ← Add task form
+│   ├── tasks.html      ← Task list + search + status filter
+│   ├── add_task.html   ← Add task form (default: pending)
 │   ├── task_detail.html← View one task
-│   └── edit_task.html  ← Edit task form
+│   └── edit_task.html  ← Edit task form (update title, description, status)
 │
 ├── static/              ← CSS, images, JavaScript
 │   └── style.css       ← All styling
@@ -80,6 +80,7 @@ TaskFlow/
 | Sets configuration | `app.config["SECRET_KEY"] = "..."` |
 | Initializes database | `init_db()` on startup |
 | Defines HTML routes | `@app.route("/tasks")` |
+| Defines search route | `@app.route("/tasks/search")` |
 | Defines API routes | `@app.route("/api/tasks")` |
 | Handles form submissions | `form.validate_on_submit()` |
 | Returns HTML pages | `render_template("tasks.html", ...)` |
@@ -98,6 +99,7 @@ TaskFlow/
 | Updates data | `UPDATE tasks SET ...` |
 | Deletes data | `DELETE FROM tasks ...` |
 | Counts data | `SELECT COUNT(*) FROM tasks` |
+| Searches data | `WHERE title LIKE ? OR description LIKE ?` |
 | Uses parameterized queries | `WHERE id = ?` with `(task_id,)` |
 
 ### [models.py](file:///c:/Users/chaud/Desktop/Projects/Data%20polaris/task%20management%20system%20by%20me/TaskFlow/models.py) — The Translator
@@ -116,20 +118,23 @@ TaskFlow/
 | CSRF protection | Automatic via `FlaskForm` |
 | Error messages | `message="Title is required."` |
 
+> **Note**: `AddTaskForm` has only `title` and `description` fields (no status dropdown).
+> `EditTaskForm` includes the `status` SelectField so users can change status when editing.
+
 ### templates/ — The Face
 
 | File | What it shows |
 |------|--------------|
 | `base.html` | Navigation bar + flash messages (shared by all pages) |
-| `index.html` | Homepage with dashboard stats |
-| `tasks.html` | Table of all tasks + filter links |
-| `add_task.html` | Form to add a task |
+| `index.html` | Homepage with dashboard stats (color-coded stat cards) |
+| `tasks.html` | Table of all tasks + search bar + filter links |
+| `add_task.html` | Form to add a task (title + description only, status auto-set to pending) |
 | `task_detail.html` | One task's full details |
-| `edit_task.html` | Form to edit a task |
+| `edit_task.html` | Form to edit a task (title, description, and status dropdown) |
 
 ### static/style.css — The Appearance
 
-Handles all visual styling: colors, fonts, spacing, layout for navigation, tables, forms, buttons, badges, and flash messages.
+Handles all visual styling: modern system fonts, clean blue buttons with hover animations, rounded stat cards with color-coded numbers, pill-shaped status badges, rounded tables, and responsive layouts.
 
 ### requirements.txt — The Shopping List
 
@@ -304,6 +309,15 @@ base.html (parent)
 | 9 | Separation of responsibilities | Done | Each file has one job |
 
 **All 9 syllabus points for Module 19 are covered.**
+
+> **Design Updates:**
+> - `forms.py` → `AddTaskForm` no longer has a `status` dropdown — new tasks always start as `"pending"`
+> - `app.py` → `add_task()` route hardcodes `"pending"` instead of reading `form.status.data`
+> - `add_task.html` → Only shows Title and Description fields (no status dropdown)
+> - `EditTaskForm` still has the status dropdown so users can change status when editing
+> - `style.css` → Updated with modern buttons, color-coded stat cards, pill badges, rounded tables
+> - `base.html` → CSS link includes `?v=2` for cache-busting
+> - Task Search is implemented via `search_tasks()` in `database.py` and `/tasks/search` route in `app.py`
 
 ---
 
