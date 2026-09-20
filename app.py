@@ -15,6 +15,15 @@ from flask import Flask, render_template, request, redirect, url_for, flash, jso
 # flash         → Shows a one-time message to the user (like "Task created!")
 # jsonify       → Converts Python dictionaries to JSON responses for APIs
 
+import os
+import database
+
+# Vercel's filesystem is read-only except for /tmp.
+# Keep the normal local database when running locally, but use
+# /tmp on Vercel so the SQLite database can be opened.
+if os.environ.get("VERCEL"):
+    database.DATABASE = "/tmp/tasks.db"
+
 from database import init_db
 from database import get_all_tasks, get_task_by_id, get_tasks_by_status, get_task_counts
 from database import create_task, update_task, delete_task, search_tasks
