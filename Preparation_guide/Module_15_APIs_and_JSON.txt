@@ -1,0 +1,238 @@
+================================================================
+MODULE 15 — APIs and JSON
+================================================================
+Day 3 | Flask Routes, Requests, Forms and APIs
+================================================================
+
+1. What is an API?
+------------------
+API (Application Programming Interface) is a way for 
+PROGRAMS to communicate with each other.
+
+    HTML Forms:
+      Human → Browser → Flask → HTML Response → Human reads it
+
+    API:
+      Program → HTTP Request → Flask → JSON Response → Program processes it
+
+API clients include:
+  - Mobile apps (Android, iOS)
+  - JavaScript frontend (React, Vue)
+  - Other servers
+  - Postman (testing tool)
+  - curl (command line)
+
+
+2. JSON Request
+----------------
+When an API client sends data, it sends JSON in the request body.
+
+    POST /api/tasks
+    Content-Type: application/json
+
+    {
+        "title": "Learn Flask",
+        "description": "Study the framework",
+        "status": "pending"
+    }
+
+In Flask:
+    data = request.get_json()
+    title = data.get("title")           → "Learn Flask"
+    description = data.get("description") → "Study the framework"
+
+
+3. JSON Response
+-----------------
+Flask sends JSON responses using jsonify().
+
+    from flask import jsonify
+
+    # Single object
+    return jsonify({
+        "id": 1,
+        "title": "Learn Flask",
+        "status": "pending"
+    })
+
+    # List of objects
+    return jsonify([
+        {"id": 1, "title": "Learn Flask"},
+        {"id": 2, "title": "Build API"}
+    ])
+
+    # With status code
+    return jsonify({"error": "Not found"}), 404
+
+jsonify() does TWO things:
+    1. Converts Python dict/list to JSON string
+    2. Sets Content-Type header to application/json
+
+
+4. CRUD Operations via API
+---------------------------
+CRUD = Create, Read, Update, Delete
+
+    CREATE (POST):
+        Request:  POST /api/tasks
+                  Body: {"title": "New Task"}
+        Response: {"message": "Created", "task": {...}}, 201
+
+    READ (GET):
+        Request:  GET /api/tasks
+        Response: [{"id": 1, ...}, {"id": 2, ...}], 200
+
+        Request:  GET /api/tasks/1
+        Response: {"id": 1, "title": "...", ...}, 200
+
+    UPDATE (PUT):
+        Request:  PUT /api/tasks/1
+                  Body: {"title": "Updated", "status": "completed"}
+        Response: {"message": "Updated", "task": {...}}, 200
+
+    DELETE (DELETE):
+        Request:  DELETE /api/tasks/1
+        Response: {"message": "Deleted"}, 200
+
+
+5. REST-Style Routes
+---------------------
+REST (Representational State Transfer) is a CONVENTION for 
+designing API URLs.
+
+REST rules:
+  - Use NOUNS for URLs (not verbs)
+  - Use HTTP methods for actions
+  - Use plural names for collections
+
+    Good (REST):
+        GET    /api/tasks        ← List tasks
+        POST   /api/tasks        ← Create task
+        GET    /api/tasks/1      ← Get task 1
+        PUT    /api/tasks/1      ← Update task 1
+        DELETE /api/tasks/1      ← Delete task 1
+
+    Bad (not REST):
+        GET    /api/getTasks
+        POST   /api/createTask
+        GET    /api/deleteTask/1
+
+REST pattern in Flask:
+    @app.route("/api/tasks", methods=["GET"])
+    def api_get_tasks():
+        ...
+
+    @app.route("/api/tasks", methods=["POST"])
+    def api_create_task():
+        ...
+
+    @app.route("/api/tasks/<int:task_id>", methods=["PUT"])
+    def api_update_task(task_id):
+        ...
+
+    @app.route("/api/tasks/<int:task_id>", methods=["DELETE"])
+    def api_delete_task(task_id):
+        ...
+
+
+6. HTML Form vs API Communication
+-----------------------------------
+
+    HTML Form Flow:
+        Browser → POST /tasks/add (form data) → Flask
+        Flask → redirect to /tasks → Browser shows HTML
+
+    API Flow:
+        Client → POST /api/tasks (JSON) → Flask
+        Flask → JSON response → Client processes data
+
+    Key Differences:
+        Feature          HTML Forms           APIs
+        ───────          ──────────           ────
+        Data Format      form-encoded         JSON
+        Client           Browser              Any program
+        Response         HTML page/redirect   JSON data
+        Flask reads      request.form         request.get_json()
+        Flask returns    render_template()    jsonify()
+
+    Why have BOTH?
+        HTML forms → For users browsing the website
+        APIs → For Postman testing, mobile apps, other programs
+
+
+Complete API Example — Our Task Manager
+-----------------------------------------
+    # CREATE
+    @app.route("/api/tasks", methods=["POST"])
+    def api_create_task():
+        data = request.get_json()
+        
+        if not data or not data.get("title"):
+            return jsonify({"error": "Title is required"}), 400
+        
+        task_id = create_task(data["title"], data.get("description", ""), "pending")
+        task = get_task_by_id(task_id)
+        
+        return jsonify({"message": "Task created", "task": task_to_dict(task)}), 201
+
+    # READ ALL
+    @app.route("/api/tasks", methods=["GET"])
+    def api_get_tasks():
+        status = request.args.get("status")
+        if status:
+            tasks = get_tasks_by_status(status)
+        else:
+            tasks = get_all_tasks()
+        return jsonify([task_to_dict(t) for t in tasks]), 200
+
+    # READ ONE
+    @app.route("/api/tasks/<int:task_id>", methods=["GET"])
+    def api_get_task(task_id):
+        task = get_task_by_id(task_id)
+        if not task:
+            return jsonify({"error": "Task not found"}), 404
+        return jsonify(task_to_dict(task)), 200
+
+    # UPDATE
+    @app.route("/api/tasks/<int:task_id>", methods=["PUT"])
+    def api_update_task(task_id):
+        task = get_task_by_id(task_id)
+        if not task:
+            return jsonify({"error": "Task not found"}), 404
+        
+        data = request.get_json()
+        title = data.get("title", task["title"])
+        description = data.get("description", task["description"])
+        status = data.get("status", task["status"])
+        
+        update_task(task_id, title, description, status)
+        return jsonify({"message": "Updated"}), 200
+
+    # DELETE
+    @app.route("/api/tasks/<int:task_id>", methods=["DELETE"])
+    def api_delete_task(task_id):
+        task = get_task_by_id(task_id)
+        if not task:
+            return jsonify({"error": "Task not found"}), 404
+        delete_task(task_id)
+        return jsonify({"message": "Deleted"}), 200
+
+
+Testing APIs with Postman
+--------------------------
+    1. Open Postman
+    2. Set the method (GET, POST, PUT, DELETE)
+    3. Enter the URL (http://localhost:5000/api/tasks)
+    4. For POST/PUT: Go to Body → raw → JSON
+    5. Send the request
+    6. View the JSON response
+
+
+================================================================
+Code File: app.py
+  - /api/tasks routes (GET, POST)
+  - /api/tasks/<id> routes (GET, PUT, DELETE)
+  - request.get_json() for reading JSON
+  - jsonify() for sending JSON responses
+  - Status codes (200, 201, 400, 404)
+================================================================

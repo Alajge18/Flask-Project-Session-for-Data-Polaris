@@ -1,0 +1,159 @@
+================================================================
+MODULE 24 — Git and GitHub
+================================================================
+Day 6 | Production, GitHub and Deployment
+================================================================
+
+1. What is Git?
+----------------
+Git is a VERSION CONTROL system. It tracks changes to your code 
+over time, like a "save history" for your project.
+
+    Without Git:
+        project_v1.zip
+        project_v2_final.zip
+        project_v2_final_REAL.zip
+        project_v3_actually_final.zip
+
+    With Git:
+        One folder with complete history of every change.
+
+
+2. What is GitHub?
+-------------------
+GitHub is a WEBSITE that hosts Git repositories online.
+It lets you:
+  - Store your code in the cloud
+  - Share projects publicly (portfolio)
+  - Collaborate with others
+  - Deploy applications (via Render, Vercel)
+
+
+3. Version Control Workflow
+----------------------------
+
+    Step 1: Create Repository
+        git init
+        → Creates a .git folder (hidden) that tracks changes
+
+    Step 2: Stage Changes
+        git add .
+        → Tells Git: "These are the files I want to save"
+        → The "." means ALL files (or specify individual files)
+
+    Step 3: Commit
+        git commit -m "Initial commit: Flask Task Manager"
+        → Saves a snapshot of your code with a message
+        → Like pressing "Save" with a description
+
+    Step 4: Push to GitHub
+        git remote add origin https://github.com/YOUR_USERNAME/task-management.git
+        git push -u origin main
+        → Uploads your code to GitHub
+
+
+4. Basic Commands
+------------------
+
+    # Initialize a new repository
+    git init
+
+    # Check status (what changed?)
+    git status
+
+    # Stage files for commit
+    git add .                    ← Stage ALL files
+    git add app.py               ← Stage one file
+    git add templates/           ← Stage a folder
+
+    # Commit (save a snapshot)
+    git commit -m "Add task creation feature"
+
+    # Push to GitHub
+    git push origin main
+
+    # Pull latest changes from GitHub
+    git pull origin main
+
+    # View commit history
+    git log --oneline
+
+
+5. .gitignore
+--------------
+Tells Git which files to IGNORE (not track).
+
+    # .gitignore
+    venv/              ← Virtual environment (large, recreatable)
+    __pycache__/       ← Python cache files
+    *.pyc              ← Compiled Python files
+    tasks.db           ← Database (has user data, recreated on deploy)
+    .env               ← Environment variables (secrets!)
+    .vscode/           ← IDE settings
+    .idea/             ← IDE settings
+
+    Rule: Never commit:
+      ✗ Virtual environments (too large)
+      ✗ Database files (contain user data)
+      ✗ Secret keys or passwords
+      ✗ IDE configuration files
+
+
+6. Creating a GitHub Repository
+---------------------------------
+
+    Step 1: Go to github.com → click "+" → "New repository"
+    Step 2: Name it: task-management
+    Step 3: Don't initialize with README (we have one)
+    Step 4: Click "Create repository"
+    Step 5: Follow the commands shown:
+
+        git remote add origin https://github.com/YOU/task-management.git
+        git branch -M main
+        git push -u origin main
+
+    Step 6: Refresh GitHub → your code is there!
+
+
+7. Good Commit Messages
+-------------------------
+    ✓ "Add task creation route and form"
+    ✓ "Fix bug: task status validation"
+    ✓ "Add SQLite database integration"
+    ✓ "Implement REST API endpoints"
+
+    ✗ "fix stuff"
+    ✗ "changes"
+    ✗ "asdfgh"
+    ✗ "final final final"
+
+
+Complete Workflow for Our Project
+-----------------------------------
+    # 1. Initialize
+    git init
+    
+    # 2. Create .gitignore FIRST
+    # (so sensitive files are never tracked)
+    
+    # 3. Stage everything
+    git add .
+    
+    # 4. First commit
+    git commit -m "Initial commit: Flask Task Management System"
+    
+    # 5. Connect to GitHub
+    git remote add origin https://github.com/YOU/task-management.git
+    
+    # 6. Push
+    git branch -M main
+    git push -u origin main
+    
+    # 7. Verify on GitHub
+
+
+================================================================
+Code Files:
+  .gitignore  — Files to exclude from version control
+  README.md   — Project documentation for GitHub
+================================================================

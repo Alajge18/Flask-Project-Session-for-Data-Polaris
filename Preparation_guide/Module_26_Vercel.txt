@@ -1,0 +1,104 @@
+================================================================
+MODULE 26 — Vercel (Optional/Demo)
+================================================================
+Day 6 | Production, GitHub and Deployment
+================================================================
+
+Vercel is an ADDITIONAL deployment option introduced as a demo.
+Render is the primary platform for this workshop.
+
+
+1. What is Serverless Deployment?
+----------------------------------
+    Traditional (Render):
+      Your Flask app runs as a PROCESS on a server.
+      The process stays alive, waiting for requests.
+
+    Serverless (Vercel):
+      Your Flask app runs as a FUNCTION.
+      It starts when a request arrives and stops after responding.
+      No server to manage!
+
+
+2. Flask on Vercel
+-------------------
+    Vercel was built for JavaScript/Next.js, but it supports Python.
+    Flask works on Vercel with some configuration.
+
+    Configuration file: vercel.json
+    {
+        "builds": [
+            {"src": "app.py", "use": "@vercel/python"}
+        ],
+        "routes": [
+            {"src": "/(.*)", "dest": "app.py"}
+        ]
+    }
+
+    Breaking it down:
+        builds:  Tells Vercel to use Python to run app.py
+        routes:  Sends ALL URLs to app.py (Flask handles routing)
+
+
+3. Limitations of Flask on Vercel
+-----------------------------------
+    ✗ SQLite doesn't persist (serverless = no permanent file storage)
+    ✗ File uploads don't persist
+    ✗ Cold starts can be slow
+    ✗ Not ideal for long-running processes
+    ✗ Limited Python package support
+
+    ✓ Great for simple APIs
+    ✓ Very fast deployment
+    ✓ Generous free tier
+    ✓ Good for static + API projects
+
+
+4. Render vs Vercel
+--------------------
+    Feature              Render              Vercel
+    ───────              ──────              ──────
+    Type                 Traditional server   Serverless
+    Python Support       Excellent            Basic
+    SQLite               Works (ephemeral)    Doesn't persist
+    Flask Support        Full                 Limited
+    Free Tier            750 hrs/month        100 GB bandwidth
+    Cold Start           ~30s (free tier)     Varies
+    Best For             Full Flask apps      Simple APIs, frontend
+    Our Workshop         ✓ Primary            Optional demo
+
+    Recommendation:
+      Use RENDER for Flask applications.
+      Use Vercel for JavaScript frontends that call your Render API.
+
+
+5. When to Choose Each Platform
+---------------------------------
+    Choose Render when:
+      ✓ Building Flask/Python backends
+      ✓ Need SQLite or file storage
+      ✓ Need persistent processes
+      ✓ Building full-stack applications
+
+    Choose Vercel when:
+      ✓ Building JavaScript frontends (React, Next.js)
+      ✓ Simple serverless functions
+      ✓ Static websites
+      ✓ JAMstack architecture
+
+
+6. Workshop Focus
+------------------
+    Mandatory: Render deployment (hands-on, every student)
+    Optional:  Vercel demo (instructor shows the process)
+
+    This ensures students:
+      ✓ Successfully deploy at least ONE project
+      ✓ Don't split time between multiple platforms
+      ✓ Understand the difference between traditional and serverless
+
+
+================================================================
+Code File:
+  vercel.json — Configuration for Vercel deployment (optional)
+================================================================

@@ -1,0 +1,176 @@
+================================================================
+MODULE 21 — Validation and Error Handling
+================================================================
+Day 5 | Complete Task Management Backend
+================================================================
+
+Validation ensures that the data sent by clients is CORRECT 
+before we process or store it. Error handling ensures that 
+failures are communicated clearly.
+
+
+What We Validate
+-----------------
+
+1. Missing task title:
+    Request: {"description": "No title here"}
+    Response: {"error": "Task title is required"}, 400
+
+2. Invalid user ID:
+    Request: {"title": "Task", "user_id": 999}
+    Response: {"error": "User not found"}, 404
+
+3. Non-existent task:
+    Request: GET /api/tasks/999
+    Response: {"error": "Task not found"}, 404
+
+4. Invalid task status:
+    Request: {"status": "xyz"}
+    Response: {"error": "Invalid status. Use: ['pending', 'in_progress', 'completed']"}, 400
+
+5. Invalid request data:
+    Request: (no JSON body or malformed JSON)
+    Response: {"error": "Request body is required"}, 400
+
+
+Validation Patterns
+--------------------
+
+Pattern 1 — Check for required fields:
+    data = request.get_json()
+    
+    if not data:
+        return jsonify({"error": "Request body is required"}), 400
+    
+    if not data.get("title"):
+        return jsonify({"error": "Task title is required"}), 400
+
+Pattern 2 — Check for valid values:
+    VALID_STATUSES = ["pending", "in_progress", "completed"]
+    
+    if data.get("status") and data["status"] not in VALID_STATUSES:
+        return jsonify({"error": f"Invalid status. Use: {VALID_STATUSES}"}), 400
+
+Pattern 3 — Check if resource exists:
+    task = get_task_by_id(task_id)
+    if not task:
+        return jsonify({"error": "Task not found"}), 404
+
+Pattern 4 — Validate related resources:
+    if data.get("user_id"):
+        user = get_user_by_id(data["user_id"])
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+
+
+Error Responses
+----------------
+Always return errors as JSON with:
+    1. A clear error message
+    2. An appropriate HTTP status code
+
+    Format:
+        {"error": "Human-readable error message"}
+
+    Examples:
+        {"error": "Task title is required"}, 400
+        {"error": "Task not found"}, 404
+        {"error": "Invalid status. Use: ['pending', 'in_progress', 'completed']"}, 400
+        {"error": "Name and email are required"}, 400
+
+
+HTTP 400 Bad Request
+---------------------
+Return 400 when the CLIENT sent bad data:
+  - Missing required fields
+  - Invalid format
+  - Invalid values
+
+    @app.route("/api/tasks", methods=["POST"])
+    def api_create_task():
+        data = request.get_json()
+        
+        if not data or not data.get("title"):
+            return jsonify({"error": "Task title is required"}), 400
+        
+        if data.get("status") and data["status"] not in VALID_STATUSES:
+            return jsonify({"error": f"Invalid status"}), 400
+
+
+Global Error Handlers
+----------------------
+Flask can handle errors that happen ANYWHERE in the application:
+
+    @app.errorhandler(404)
+    def not_found(error):
+        return jsonify({"error": "The requested resource was not found"}), 404
+
+    @app.errorhandler(400)
+    def bad_request(error):
+        return jsonify({"error": "Bad request"}), 400
+
+    @app.errorhandler(500)
+    def server_error(error):
+        return jsonify({"error": "Internal server error"}), 500
+
+
+Flask-WTF Validation (for HTML forms)
+---------------------------------------
+    class AddTaskForm(FlaskForm):
+        title = StringField("Title", validators=[
+            DataRequired(message="Title is required.")
+        ])
+    
+    # In the route:
+    if form.validate_on_submit():
+        # ✓ All validation passed
+        ...
+    else:
+        # ✗ Validation failed — form.title.errors has error messages
+        ...
+
+    # In the template:
+    {% for error in form.title.errors %}
+        <span class="error">{{ error }}</span>
+    {% endfor %}
+
+
+Complete Validation Example
+-----------------------------
+    @app.route("/api/tasks", methods=["POST"])
+    def api_create_task():
+        # Step 1: Check if body exists
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "Request body is required"}), 400
+        
+        # Step 2: Check required fields
+        if not data.get("title") or not data["title"].strip():
+            return jsonify({"error": "Task title is required"}), 400
+        
+        # Step 3: Validate optional fields
+        status = data.get("status", "pending")
+        if status not in VALID_STATUSES:
+            return jsonify({"error": f"Invalid status. Use: {VALID_STATUSES}"}), 400
+        
+        # Step 4: Validate related resources
+        user_id = data.get("user_id")
+        if user_id:
+            user = get_user_by_id(user_id)
+            if not user:
+                return jsonify({"error": "User not found"}), 404
+        
+        # Step 5: All valid — create the task
+        task_id = create_task(data["title"], data.get("description", ""), status, user_id)
+        task = get_task_by_id(task_id)
+        
+        return jsonify({"message": "Task created", "task": task_to_dict(task)}), 201
+
+
+================================================================
+Code Files:
+  routes/task_routes.py  — Validation in every API endpoint
+  routes/user_routes.py  — Validation for user creation
+  app.py                 — Global error handlers (404, 500)
+  forms.py               — Flask-WTF validators for HTML forms
+================================================================

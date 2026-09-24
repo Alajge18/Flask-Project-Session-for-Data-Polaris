@@ -1,0 +1,167 @@
+================================================================
+MODULE 2 — Modules and Packages
+================================================================
+Day 1 | Python for Backend Development
+================================================================
+
+What is a Module?
+-----------------
+A module is simply a PYTHON FILE (.py) that contains code 
+(functions, classes, variables) which can be IMPORTED and 
+reused in other files.
+
+    # math_helpers.py    ← This IS a module
+    def add(a, b):
+        return a + b
+
+    # app.py             ← This USES the module
+    from math_helpers import add
+    result = add(3, 5)
+
+
+1. import Statement
+-------------------
+'import' brings code from another module into your file.
+
+    import json                         ← Import entire module
+    json.dumps({"key": "value"})        ← Use with module name prefix
+
+    from json import dumps              ← Import specific function
+    dumps({"key": "value"})             ← Use directly (no prefix)
+
+    from json import dumps, loads       ← Import multiple items
+
+    from datetime import datetime       ← From module, import class
+
+In Flask:
+    from flask import Flask, request, jsonify, render_template
+    # We import specific things we need from the flask package
+
+
+2. Creating Python Modules
+--------------------------
+Any .py file is a module. In our project:
+
+    task_manager.py   → Day 1 module (Task, TaskManager classes)
+    database.py       → Day 4 module (database operations)
+    models.py         → Day 4 module (data conversion)
+    forms.py          → Day 3 module (form classes)
+    config.py         → Day 6 module (configuration)
+
+Example of creating and using a module:
+
+    # models.py
+    VALID_STATUSES = ["pending", "in_progress", "completed"]
+    
+    def task_to_dict(task):
+        return {"id": task["id"], "title": task["title"]}
+
+    # app.py
+    from models import task_to_dict, VALID_STATUSES
+
+
+3. Using External Packages
+--------------------------
+External packages are code written by OTHER developers that 
+you can install and use in your projects.
+
+    Built-in modules (no install needed):
+      - json, datetime, sqlite3, os, sys
+
+    External packages (need pip install):
+      - Flask         → Web framework
+      - Flask-WTF     → Form handling
+      - WTForms       → Form fields and validators
+      - gunicorn      → Production web server
+
+
+4. pip — Package Installer
+--------------------------
+pip is Python's package manager. It downloads and installs 
+packages from PyPI (Python Package Index — pypi.org).
+
+    pip install flask               ← Install a package
+    pip install flask==3.1.1        ← Install specific version
+    pip install flask flask-wtf     ← Install multiple at once
+    pip uninstall flask             ← Remove a package
+    pip list                        ← Show all installed packages
+    pip freeze                      ← Show installed with versions
+
+    pip install -r requirements.txt ← Install ALL from a file
+
+
+5. Virtual Environments
+-----------------------
+A virtual environment is an ISOLATED Python installation.
+Each project gets its OWN set of packages — they don't interfere 
+with each other.
+
+WHY?
+  Project A needs Flask 2.0
+  Project B needs Flask 3.1
+  Without virtual environments, they would CONFLICT.
+
+CREATE and USE:
+
+    python -m venv venv              ← Create virtual environment
+    
+    # Activate (Windows):
+    .\venv\Scripts\Activate
+    
+    # Activate (Mac/Linux):
+    source venv/bin/activate
+    
+    # Now pip installs go ONLY into this environment
+    pip install flask
+    
+    # Deactivate:
+    deactivate
+
+IMPORTANT for Flask:
+  ALWAYS create a virtual environment before starting a Flask project.
+  NEVER install Flask globally.
+
+
+6. requirements.txt
+-------------------
+A file that lists ALL packages your project needs.
+Anyone can recreate your exact environment with this file.
+
+    # requirements.txt
+    Flask==3.1.1
+    Flask-WTF==1.2.2
+    WTForms==3.2.1
+
+Create it:
+    pip freeze > requirements.txt     ← Saves current packages
+
+Install from it:
+    pip install -r requirements.txt   ← Installs everything listed
+
+This file is ESSENTIAL for:
+  - Sharing your project with others
+  - Deploying to servers (Render, Vercel)
+  - Keeping your project reproducible
+
+
+How Modules Connect to Flask
+-----------------------------
+Our Flask project is organized as multiple modules:
+
+    app.py          → Main application (imports from all others)
+    database.py     → Database operations
+    models.py       → Data models and helpers
+    forms.py        → Form definitions
+    config.py       → Configuration
+    routes/         → Route handlers (a Python PACKAGE — folder with __init__.py)
+
+Each file has ONE responsibility. This is called 
+"Separation of Concerns" — a fundamental software design principle.
+
+
+================================================================
+Code File: task_manager.py
+  - import json (using built-in module)
+  - from datetime import datetime (importing from module)
+  - Comments explaining pip, venv, requirements.txt
+================================================================

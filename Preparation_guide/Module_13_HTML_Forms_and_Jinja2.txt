@@ -1,0 +1,240 @@
+================================================================
+MODULE 13 — HTML Forms and Jinja2 Templates
+================================================================
+Day 3 | Flask Routes, Requests, Forms and APIs
+================================================================
+
+This module covers TWO connected topics:
+  1. Jinja2 Templates — dynamic HTML pages
+  2. HTML Forms — collecting user input
+
+
+PART 1: JINJA2 TEMPLATES
+=========================
+
+What is Jinja2?
+---------------
+Jinja2 is Flask's TEMPLATE ENGINE. It lets you create 
+DYNAMIC HTML pages by mixing HTML with Python-like code.
+
+Without Jinja2:
+    return "<h1>Hello " + username + "</h1>"    ← Messy!
+
+With Jinja2:
+    return render_template("page.html", name=username)
+    # In page.html: <h1>Hello {{ name }}</h1>   ← Clean!
+
+
+Jinja2 Syntax — Three Types
+----------------------------
+
+1. {{ ... }} — OUTPUT (print a value)
+    <h1>{{ task.title }}</h1>
+    <p>Total tasks: {{ tasks | length }}</p>
+    <p>{{ task.description or "No description" }}</p>
+
+2. {% ... %} — LOGIC (if, for, block)
+    {% if tasks %}
+        <p>You have {{ tasks | length }} tasks</p>
+    {% else %}
+        <p>No tasks yet</p>
+    {% endif %}
+
+    {% for task in tasks %}
+        <p>{{ task.title }}</p>
+    {% endfor %}
+
+3. {# ... #} — COMMENTS (not shown in output)
+    {# This comment is invisible in the browser #}
+
+
+Template Inheritance
+--------------------
+Template inheritance lets you create a BASE template with 
+common elements (nav, footer) and CHILD templates that 
+fill in the content.
+
+base.html (parent):
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>TaskFlow</title>
+        <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    </head>
+    <body>
+        <nav>
+            <a href="{{ url_for('home') }}">Home</a>
+            <a href="{{ url_for('tasks') }}">Tasks</a>
+        </nav>
+        
+        <div class="container">
+            {% block content %}{% endblock %}
+        </div>
+    </body>
+    </html>
+
+index.html (child):
+    {% extends "base.html" %}
+    
+    {% block content %}
+    <h1>Welcome to TaskFlow</h1>
+    <p>Your personal task manager</p>
+    {% endblock %}
+
+Result: index.html gets the nav bar, CSS, and structure from 
+base.html — it only needs to define its OWN content.
+
+
+Key Jinja2 Features Used in Our Project
+-----------------------------------------
+
+url_for() — Generate URLs safely:
+    {{ url_for('home') }}                         → /
+    {{ url_for('tasks') }}                        → /tasks
+    {{ url_for('task_detail', task_id=1) }}        → /tasks/1
+    {{ url_for('static', filename='style.css') }} → /static/style.css
+
+Loops — Display a list of tasks:
+    {% for task in tasks %}
+        <tr>
+            <td>{{ task.id }}</td>
+            <td>{{ task.title }}</td>
+            <td>{{ task.status }}</td>
+        </tr>
+    {% endfor %}
+
+Conditionals — Show content based on conditions:
+    {% if task.status == "completed" %}
+        <span class="badge completed">Done!</span>
+    {% elif task.status == "in_progress" %}
+        <span class="badge in_progress">Working...</span>
+    {% else %}
+        <span class="badge pending">Pending</span>
+    {% endif %}
+
+Filters — Transform values:
+    {{ tasks | length }}                    → Number of tasks
+    {{ task.title | upper }}               → UPPERCASE
+    {{ task.title | lower }}               → lowercase
+    {{ task.description or "No desc" }}    → Default value
+
+Flash Messages — One-time notifications:
+    In app.py:
+        flash("Task created!", "success")
+    
+    In base.html:
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="flash {{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+
+PART 2: HTML FORMS
+==================
+
+GET vs POST Forms
+-----------------
+
+GET form — data goes in the URL (for searching):
+    <form method="GET" action="/tasks/search">
+        <input type="text" name="q">
+        <button>Search</button>
+    </form>
+    → URL becomes: /tasks/search?q=flask
+
+POST form — data goes in the body (for creating/updating):
+    <form method="POST" action="/tasks/add">
+        <input type="text" name="title">
+        <button>Add Task</button>
+    </form>
+    → Data sent in request body (hidden from URL)
+
+Rule of thumb:
+    GET  → Reading/searching data (no changes)
+    POST → Creating/modifying data (makes changes)
+
+
+Form Submission Flow
+--------------------
+    1. User visits /tasks/add (GET) → Flask shows the form
+    2. User fills in the form
+    3. User clicks Submit → Browser sends POST to /tasks/add
+    4. Flask reads form data with request.form
+    5. Flask validates and saves the data
+    6. Flask redirects to /tasks (Post/Redirect/Get pattern)
+
+
+Form Data
+---------
+    <form method="POST">
+        <input type="text" name="title" value="Learn Flask">
+        <textarea name="description">Study docs</textarea>
+        <select name="status">
+            <option value="pending">Pending</option>
+            <option value="completed">Completed</option>
+        </select>
+        <button type="submit">Save</button>
+    </form>
+
+In Flask:
+    title = request.form.get("title")            → "Learn Flask"
+    description = request.form.get("description") → "Study docs"
+    status = request.form.get("status")           → "pending"
+
+
+Redirects
+---------
+After processing a POST form, REDIRECT to prevent duplicate submissions.
+
+    from flask import redirect, url_for
+    
+    @app.route("/tasks/add", methods=["GET", "POST"])
+    def add_task():
+        if request.method == "POST":
+            title = request.form.get("title")
+            create_task(title)
+            flash("Task created!", "success")
+            return redirect(url_for("tasks"))    ← REDIRECT
+        
+        return render_template("add_task.html")   ← Show form
+
+
+Flash Messages
+--------------
+One-time messages shown to the user after an action.
+
+    flash("Task created!", "success")    → Green message
+    flash("Task not found.", "error")    → Red message
+
+They appear ONCE and disappear on the next page load.
+
+
+Add Task Form — Our Project
+-----------------------------
+    <form method="POST">
+        <div class="form-group">
+            <label for="title">Title</label>
+            <input type="text" name="title" id="title" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="description">Description</label>
+            <textarea name="description" id="description" rows="4"></textarea>
+        </div>
+        
+        <button type="submit" class="btn">Add Task</button>
+    </form>
+
+
+================================================================
+Code Files:
+  templates/base.html   — Template inheritance, nav, flash messages
+  templates/index.html  — Extends base, shows dashboard stats
+  templates/tasks.html  — For loop, conditionals, filters
+  templates/add_task.html — HTML form with POST method
+  static/style.css      — Styling
+  app.py                — render_template(), flash(), redirect()
+================================================================

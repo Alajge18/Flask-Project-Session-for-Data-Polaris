@@ -1,0 +1,189 @@
+================================================================
+MODULE 4 — Dictionaries and JSON Thinking
+================================================================
+Day 1 | Python for Backend Development
+================================================================
+
+This module is the FOUNDATION for REST APIs.
+Understanding the relationship between Python Dictionaries and JSON 
+is essential for every backend developer.
+
+
+1. Python Dictionaries
+----------------------
+A dictionary stores data as KEY-VALUE pairs.
+
+    task = {
+        "id": 1,
+        "title": "Learn Flask",
+        "description": "Study Flask framework",
+        "status": "pending"
+    }
+
+Accessing values:
+    task["title"]           → "Learn Flask"
+    task["status"]          → "pending"
+    task.get("title")       → "Learn Flask"       (safer — returns None if key missing)
+    task.get("priority", "low")  → "low"          (default value if key missing)
+
+Adding/Updating:
+    task["priority"] = "high"      ← Add new key
+    task["status"] = "completed"   ← Update existing key
+
+Removing:
+    del task["priority"]           ← Remove a key
+    task.pop("priority", None)     ← Remove safely (no error if missing)
+
+
+2. Dictionary Structure
+-----------------------
+Dictionaries can contain ANY type of value:
+
+    task = {
+        "id": 1,                        ← Integer
+        "title": "Learn Flask",         ← String
+        "completed": False,             ← Boolean
+        "tags": ["python", "web"],      ← List
+        "metadata": {                   ← Nested Dictionary
+            "created_by": "admin",
+            "priority": "high"
+        }
+    }
+
+    task["tags"][0]                   → "python"
+    task["metadata"]["priority"]     → "high"
+
+A list of dictionaries (VERY common in APIs):
+
+    tasks = [
+        {"id": 1, "title": "Learn Flask", "status": "pending"},
+        {"id": 2, "title": "Build API", "status": "in_progress"},
+        {"id": 3, "title": "Deploy App", "status": "completed"}
+    ]
+    
+    tasks[0]["title"]               → "Learn Flask"
+
+
+3. Python Dictionary ↔ JSON
+----------------------------
+JSON (JavaScript Object Notation) is the STANDARD format for 
+sending data between a client and a server.
+
+    Python Dictionary                    JSON String
+    -------------------                  -----------
+    {"id": 1, "title": "Flask"}    →    '{"id": 1, "title": "Flask"}'
+    True / False                   →    true / false
+    None                           →    null
+    [1, 2, 3]                      →    [1, 2, 3]
+
+KEY INSIGHT:
+    JSON looks ALMOST IDENTICAL to a Python dictionary!
+    That's why Python is great for building APIs.
+
+Converting between them:
+
+    import json
+
+    # Dictionary → JSON String
+    task = {"id": 1, "title": "Learn Flask"}
+    json_string = json.dumps(task)
+    # Result: '{"id": 1, "title": "Learn Flask"}'
+    
+    # Pretty JSON (with indentation)
+    pretty = json.dumps(task, indent=2)
+    # Result:
+    # {
+    #   "id": 1,
+    #   "title": "Learn Flask"
+    # }
+
+    # JSON String → Dictionary
+    data = json.loads('{"id": 1, "title": "Learn Flask"}')
+    # Result: {"id": 1, "title": "Learn Flask"}
+
+
+4. JSON Representation for APIs
+--------------------------------
+When you build a REST API, this is what clients see:
+
+    GET /api/tasks
+    Response:
+    [
+        {
+            "id": 1,
+            "title": "Learn Flask",
+            "description": "Study Flask framework",
+            "status": "pending"
+        },
+        {
+            "id": 2,
+            "title": "Build API",
+            "description": "Create CRUD endpoints",
+            "status": "in_progress"
+        }
+    ]
+
+    POST /api/tasks
+    Request Body (sent by client):
+    {
+        "title": "Deploy App",
+        "description": "Push to Render"
+    }
+
+    Response:
+    {
+        "message": "Task created successfully",
+        "task": {
+            "id": 3,
+            "title": "Deploy App",
+            "description": "Push to Render",
+            "status": "pending"
+        }
+    }
+
+In Flask:
+    from flask import jsonify, request
+
+    @app.route("/api/tasks", methods=["GET"])
+    def get_tasks():
+        tasks = get_all_tasks()
+        return jsonify(tasks)              ← Dictionary → JSON automatically
+
+    @app.route("/api/tasks", methods=["POST"])
+    def create_task():
+        data = request.get_json()          ← JSON → Dictionary automatically
+        title = data["title"]
+
+
+Common Dictionary Operations Used in Flask
+------------------------------------------
+    # Checking if a key exists
+    if "title" in data:
+        ...
+
+    # Safe access with .get()
+    status = data.get("status", "pending")
+
+    # Looping through a dictionary
+    for key, value in task.items():
+        print(f"{key}: {value}")
+
+    # Dictionary comprehension
+    task_dict = {key: task[key] for key in ["id", "title", "status"]}
+
+    # Converting database row to dictionary
+    def task_to_dict(row):
+        return {
+            "id": row["id"],
+            "title": row["title"],
+            "status": row["status"]
+        }
+
+
+================================================================
+Code File: task_manager.py
+  - Task.to_dict() → converts Task object to dictionary
+  - show_json_thinking() → demonstrates Dictionary ↔ JSON
+  - json.dumps() and json.loads() examples
+  - Menu option 10 → View tasks as JSON
+================================================================

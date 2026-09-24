@@ -1,0 +1,196 @@
+================================================================
+MODULE 17 — SQL Basics
+================================================================
+Day 4 | Database and SQLite
+================================================================
+
+SQL (Structured Query Language) is the LANGUAGE used to 
+communicate with databases. You write SQL commands to 
+create, read, update, and delete data.
+
+
+1. CREATE — Create a Table
+----------------------------
+    CREATE TABLE IF NOT EXISTS tasks (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        description TEXT,
+        status TEXT NOT NULL DEFAULT 'pending',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+Breaking it down:
+    CREATE TABLE         → Create a new table
+    IF NOT EXISTS        → Only if it doesn't exist already (safe to run multiple times)
+    tasks                → Table name
+    id INTEGER           → Column "id" storing numbers
+    PRIMARY KEY          → Unique identifier for each row
+    AUTOINCREMENT        → Auto-assigns 1, 2, 3...
+    title TEXT NOT NULL   → Column "title" storing text, REQUIRED
+    description TEXT      → Column "description", OPTIONAL (no NOT NULL)
+    DEFAULT 'pending'     → If no value given, use 'pending'
+    DEFAULT CURRENT_TIMESTAMP → Auto-fills with current date/time
+
+Users table:
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        email TEXT NOT NULL UNIQUE
+    );
+
+    UNIQUE → No two users can have the same email
+
+
+2. INSERT — Add New Data
+--------------------------
+    INSERT INTO tasks (title, description, status)
+    VALUES ('Learn Flask', 'Study the framework', 'pending');
+
+    INSERT INTO tasks (title, description, status)
+    VALUES ('Build API', 'Create CRUD endpoints', 'in_progress');
+
+Breaking it down:
+    INSERT INTO tasks    → Add data to the tasks table
+    (title, desc, status) → Which columns to fill
+    VALUES (...)         → The actual values
+
+Note: We DON'T include 'id' — it's auto-generated!
+Note: We DON'T include 'created_at' — it defaults to now!
+
+In Python:
+    cursor.execute(
+        "INSERT INTO tasks (title, description, status) VALUES (?, ?, ?)",
+        (title, description, status)
+    )
+    # The ? placeholders prevent SQL injection attacks
+
+
+3. SELECT — Read Data
+----------------------
+    -- Get ALL tasks
+    SELECT * FROM tasks;
+
+    -- Get specific columns
+    SELECT id, title, status FROM tasks;
+
+    -- Get ONE task by ID
+    SELECT * FROM tasks WHERE id = 1;
+
+    -- Filter by status
+    SELECT * FROM tasks WHERE status = 'pending';
+
+    -- Order by newest first
+    SELECT * FROM tasks ORDER BY id DESC;
+
+    -- Count tasks
+    SELECT COUNT(*) FROM tasks;
+
+    -- Count by status
+    SELECT COUNT(*) FROM tasks WHERE status = 'pending';
+
+    -- Search (partial match)
+    SELECT * FROM tasks WHERE title LIKE '%Flask%';
+    -- % means "any characters" → finds "Learn Flask", "Flask Tutorial", etc.
+
+    -- Combine conditions
+    SELECT * FROM tasks
+    WHERE status = 'pending' AND title LIKE '%Flask%'
+    ORDER BY id DESC;
+
+In Python:
+    # Get all tasks
+    tasks = conn.execute("SELECT * FROM tasks ORDER BY id DESC").fetchall()
+
+    # Get one task
+    task = conn.execute("SELECT * FROM tasks WHERE id = ?", (task_id,)).fetchone()
+
+    # fetchall() → returns a LIST of rows
+    # fetchone() → returns ONE row (or None)
+
+
+4. UPDATE — Modify Existing Data
+----------------------------------
+    UPDATE tasks
+    SET title = 'Updated Title', status = 'completed'
+    WHERE id = 1;
+
+Breaking it down:
+    UPDATE tasks          → Which table to update
+    SET title = '...'     → New values
+    WHERE id = 1          → WHICH row to update
+
+    ⚠ WARNING: Without WHERE, ALL rows are updated!
+    UPDATE tasks SET status = 'completed';
+    → This makes EVERY task completed! Always use WHERE.
+
+In Python:
+    conn.execute(
+        "UPDATE tasks SET title = ?, description = ?, status = ? WHERE id = ?",
+        (title, description, status, task_id)
+    )
+    conn.commit()    ← MUST commit to save changes!
+
+
+5. DELETE — Remove Data
+------------------------
+    DELETE FROM tasks WHERE id = 1;
+
+Breaking it down:
+    DELETE FROM tasks     → Remove from this table
+    WHERE id = 1          → WHICH row to remove
+
+    ⚠ WARNING: Without WHERE, ALL rows are deleted!
+    DELETE FROM tasks;
+    → This deletes EVERY task! Always use WHERE.
+
+    ⚠ DELETE is PERMANENT. There is no undo.
+
+In Python:
+    conn.execute("DELETE FROM tasks WHERE id = ?", (task_id,))
+    conn.commit()    ← MUST commit to save the deletion!
+
+
+SQL ↔ CRUD ↔ HTTP Methods
+--------------------------
+    SQL Operation    CRUD        HTTP Method    Example
+    ─────────────    ────        ───────────    ───────
+    INSERT           Create      POST           POST /api/tasks
+    SELECT           Read        GET            GET /api/tasks
+    UPDATE           Update      PUT            PUT /api/tasks/1
+    DELETE           Delete      DELETE         DELETE /api/tasks/1
+
+
+Important Python + SQL Concepts
+---------------------------------
+
+Parameterized Queries (prevent SQL injection):
+    GOOD (safe):
+        conn.execute("SELECT * FROM tasks WHERE id = ?", (task_id,))
+    
+    BAD (vulnerable to hacking):
+        conn.execute(f"SELECT * FROM tasks WHERE id = {task_id}")
+
+commit() — Saves changes:
+    conn.execute("INSERT INTO tasks ...")
+    conn.commit()     ← Without this, the INSERT is LOST!
+
+    Rule: Always commit() after INSERT, UPDATE, DELETE
+    No commit needed for SELECT (just reading)
+
+close() — Frees resources:
+    conn = sqlite3.connect("tasks.db")
+    # ... do stuff ...
+    conn.close()      ← Always close when done!
+
+
+================================================================
+Code File: database.py
+  - CREATE TABLE in init_db()
+  - INSERT in create_task(), create_user()
+  - SELECT in get_all_tasks(), get_task_by_id(), get_tasks_by_status()
+  - UPDATE in update_task()
+  - DELETE in delete_task()
+  - Parameterized queries (?) throughout
+  - commit() after every modification
+  - close() after every operation
+================================================================

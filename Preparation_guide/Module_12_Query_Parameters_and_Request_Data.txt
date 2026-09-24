@@ -1,0 +1,159 @@
+================================================================
+MODULE 12 — Query Parameters and Request Data
+================================================================
+Day 3 | Flask Routes, Requests, Forms and APIs
+================================================================
+
+Clients send data to the server in DIFFERENT ways.
+Understanding when to use each type is essential.
+
+
+1. Query Parameters — request.args
+-----------------------------------
+Query parameters are key-value pairs APPENDED to the URL after a "?".
+
+    /tasks?status=pending
+    /tasks?status=pending&sort=newest
+    /tasks/search?q=flask&status=completed
+
+In Flask:
+    @app.route("/tasks")
+    def get_tasks():
+        status = request.args.get("status")
+        # If URL is /tasks?status=pending → status = "pending"
+        # If URL is /tasks               → status = None
+
+        sort = request.args.get("sort", "newest")
+        # "newest" is the DEFAULT value if ?sort= is not in the URL
+
+When to use query parameters:
+  ✓ Filtering data (GET /tasks?status=pending)
+  ✓ Searching (GET /tasks/search?q=flask)
+  ✓ Pagination (GET /tasks?page=2&per_page=10)
+  ✓ Sorting (GET /tasks?sort=title&order=asc)
+
+Important:
+  - Query parameters are VISIBLE in the URL
+  - They are part of GET requests
+  - Used for READ operations only (not for sensitive data)
+
+
+2. Form Data — request.form
+-----------------------------
+Form data is sent when a user submits an HTML form with POST method.
+
+    <form method="POST" action="/tasks/add">
+        <input type="text" name="title" value="Learn Flask">
+        <textarea name="description">Study the docs</textarea>
+        <button type="submit">Add Task</button>
+    </form>
+
+In Flask:
+    @app.route("/tasks/add", methods=["POST"])
+    def add_task():
+        title = request.form.get("title")
+        description = request.form.get("description")
+        # title = "Learn Flask"
+        # description = "Study the docs"
+
+    # Or with .get() for safety:
+        title = request.form.get("title", "")
+        # Returns "" if "title" is not in the form data
+
+When to use form data:
+  ✓ HTML form submissions
+  ✓ User input from web pages
+  ✓ Login forms
+  ✓ Creating/editing records through web interface
+
+Important:
+  - Sent in the REQUEST BODY (not in the URL)
+  - Only with POST (or PUT) method
+  - Content-Type: application/x-www-form-urlencoded
+
+
+3. JSON Data — request.json / request.get_json()
+-------------------------------------------------
+JSON data is sent by API clients (Postman, mobile apps, JavaScript).
+
+    POST /api/tasks
+    Content-Type: application/json
+
+    {
+        "title": "Learn Flask",
+        "description": "Study the docs",
+        "status": "pending"
+    }
+
+In Flask:
+    @app.route("/api/tasks", methods=["POST"])
+    def api_create_task():
+        data = request.get_json()
+        # data = {"title": "Learn Flask", "description": "Study the docs", "status": "pending"}
+
+        title = data.get("title")
+        description = data.get("description", "")
+
+    # request.json is a shortcut for request.get_json()
+    # But get_json() is safer — it returns None if no JSON body
+
+When to use JSON data:
+  ✓ REST API endpoints
+  ✓ Mobile app communication
+  ✓ JavaScript fetch() calls
+  ✓ Postman testing
+
+Important:
+  - Sent in the REQUEST BODY
+  - Client must set Content-Type: application/json
+  - Used for POST, PUT, PATCH methods
+
+
+Comparison Table
+-----------------
+    Type              Source           Example                 Flask Code
+    ────              ──────           ───────                 ──────────
+    Query Params      URL              /tasks?status=pending   request.args.get("status")
+    Form Data         HTML Form        <form method="POST">    request.form.get("title")
+    JSON Data         API Client       {"title": "..."}        request.get_json()["title"]
+
+
+When to Use What?
+-----------------
+    Scenario                              Use This
+    ────────                              ────────
+    User visits /tasks?status=pending     request.args
+    User submits "Add Task" HTML form     request.form
+    Postman sends JSON to /api/tasks      request.get_json()
+    Mobile app creates a task             request.get_json()
+    JavaScript fetch() call               request.get_json()
+
+
+Practical Example — All Three in One App
+-----------------------------------------
+    # Query params — filter tasks by status
+    @app.route("/tasks")
+    def get_tasks():
+        status = request.args.get("status")         ← request.args
+        ...
+
+    # Form data — add task from HTML form
+    @app.route("/tasks/add", methods=["POST"])
+    def add_task():
+        title = request.form.get("title")            ← request.form
+        ...
+
+    # JSON — add task from API
+    @app.route("/api/tasks", methods=["POST"])
+    def api_add_task():
+        data = request.get_json()                    ← request.get_json()
+        title = data.get("title")
+        ...
+
+
+================================================================
+Code File: app.py
+  - request.args.get("status") for filtering tasks
+  - request.form used in HTML form routes
+  - request.get_json() used in API routes
+================================================================

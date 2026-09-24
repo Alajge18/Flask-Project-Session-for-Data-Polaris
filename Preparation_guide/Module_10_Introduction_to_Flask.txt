@@ -1,0 +1,214 @@
+================================================================
+MODULE 10 — Introduction to Flask
+================================================================
+Day 2 | Backend Fundamentals and First Flask Application
+================================================================
+
+1. What is Flask?
+-----------------
+Flask is a LIGHTWEIGHT web framework for Python.
+It lets you build web applications and APIs with minimal code.
+
+"Lightweight" means:
+  - Small core — only what you need
+  - No forced project structure
+  - Add features as you need them (via extensions)
+
+
+2. Why Flask?
+-------------
+  ✓ Simple and beginner-friendly
+  ✓ Great for learning backend development
+  ✓ Widely used in industry
+  ✓ Excellent documentation
+  ✓ Flexible — YOU decide the project structure
+  ✓ Large ecosystem of extensions
+  ✓ Perfect for APIs and small-to-medium applications
+
+
+3. Flask vs Django vs FastAPI
+-----------------------------
+    Feature        Flask           Django          FastAPI
+    ───────        ─────           ──────          ───────
+    Type           Micro-framework Full-framework  Modern API
+    Learning       Easy            Moderate        Moderate
+    Flexibility    High            Low (opinionated) Medium
+    Built-in       Minimal         Everything      API-focused
+    ORM            No (add it)     Yes (built-in)  No (add it)
+    Admin Panel    No              Yes (built-in)  No
+    Best For       APIs, small     Large apps,     APIs, async
+                   apps, learning  CMS, e-commerce
+
+    For this workshop: Flask is PERFECT because:
+      - We learn each piece individually
+      - We build everything ourselves (better learning)
+      - Simple enough to cover in 6 days
+
+
+4. Flask Installation
+---------------------
+    # Step 1: Create project folder
+    mkdir task-management
+    cd task-management
+
+    # Step 2: Create virtual environment
+    python -m venv venv
+
+    # Step 3: Activate virtual environment
+    # Windows:
+    .\venv\Scripts\Activate
+    # Mac/Linux:
+    source venv/bin/activate
+
+    # Step 4: Install Flask
+    pip install flask
+
+    # Step 5: Verify installation
+    python -c "import flask; print(flask.__version__)"
+
+
+5. Virtual Environments (Recap)
+-------------------------------
+    ALWAYS use a virtual environment:
+      python -m venv venv
+      .\venv\Scripts\Activate        (Windows)
+      source venv/bin/activate        (Mac/Linux)
+    
+    Your terminal should show: (venv) before the prompt.
+
+
+6. requirements.txt
+-------------------
+    # Create:
+    pip freeze > requirements.txt
+    
+    # Our requirements.txt:
+    Flask==3.1.1
+    
+    # Install from file:
+    pip install -r requirements.txt
+
+
+7. Creating a Flask Application
+-------------------------------
+    from flask import Flask
+    
+    app = Flask(__name__)
+    
+    @app.route("/")
+    def home():
+        return "Hello Flask!"
+    
+    if __name__ == "__main__":
+        app.run(debug=True)
+
+    Breaking it down:
+      Line 1: Import Flask class from flask package
+      Line 3: Create a Flask application object
+              __name__ tells Flask where this file is located
+      Line 5: @app.route("/") — decorator connecting URL "/" to function
+      Line 6: def home() — runs when someone visits "/"
+      Line 7: return "Hello Flask!" — sends text back to browser
+      Line 9: Only runs when you execute: python app.py
+      Line 10: Starts the development server with debug mode ON
+
+
+8. Running a Flask Server
+-------------------------
+    python app.py
+
+    Output:
+      * Running on http://127.0.0.1:5000
+      * Debug mode: on
+    
+    Open your browser and go to: http://127.0.0.1:5000
+    You should see: "Hello Flask!"
+
+    To stop the server: Ctrl+C
+
+
+9. Debug Mode
+-------------
+    app.run(debug=True)
+    
+    Debug mode gives you:
+      1. AUTO-RELOAD: Server restarts when you save code changes
+         → No need to stop and restart manually!
+      2. DETAILED ERRORS: Shows the exact line where the error occurred
+         → Much easier to fix bugs!
+    
+    WARNING: NEVER use debug=True in production!
+      → It exposes internal details that hackers could exploit.
+      → On Day 6, we'll learn how to disable it for deployment.
+
+
+10. First Flask Application
+----------------------------
+    from flask import Flask
+    
+    app = Flask(__name__)
+    
+    @app.route("/")
+    def home():
+        return "Hello Flask!"
+    
+    if __name__ == "__main__":
+        app.run(debug=True)
+
+
+11. Basic Flask Routes
+-----------------------
+    @app.route("/")
+    def home():
+        return "Welcome to TaskFlow!"
+    
+    @app.route("/about")
+    def about():
+        return "TaskFlow - A Task Management System"
+    
+    @app.route("/tasks")
+    def tasks():
+        return "All Tasks"
+    
+    @app.route("/tasks/<int:id>")
+    def task_detail(id):
+        return f"Task #{id}"
+
+
+Converting Day 1 to Day 2
+--------------------------
+    Day 1 (Python CLI):
+        manager = TaskManager()
+        manager.add_task("Learn Flask")
+        tasks = manager.get_all_tasks()
+        print(tasks)
+    
+    Day 2 (Flask):
+        tasks = [
+            {"id": 1, "title": "Learn Flask", "status": "pending"}
+        ]
+        
+        @app.route("/tasks")
+        def get_tasks():
+            return jsonify(tasks)
+
+    KEY INSIGHT:
+        The LOGIC is the same.
+        The INTERFACE changed from CLI to HTTP.
+        Python function → Flask route → HTTP response
+
+
+================================================================
+Code File: app.py
+  - Flask(__name__) creates the application
+  - @app.route() for routes: /, /about, /tasks, /tasks/<id>
+  - In-memory tasks list (before database)
+  - jsonify() for JSON responses
+  - app.run(debug=True)
+
+Code File: requirements.txt
+  - Flask==3.1.1
+
+Template Files: templates/index.html, templates/about.html
+  - Basic HTML pages (Jinja2 added in Module 13)
+================================================================

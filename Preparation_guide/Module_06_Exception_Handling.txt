@@ -1,0 +1,220 @@
+================================================================
+MODULE 6 — Exception Handling
+================================================================
+Day 1 | Python for Backend Development
+================================================================
+
+Why Exception Handling Matters in Backend Development
+-----------------------------------------------------
+In a web application, errors WILL happen:
+  - User submits an empty form
+  - User requests a task that doesn't exist
+  - Database connection fails
+  - Invalid data format
+
+Without exception handling:
+  The application CRASHES → User sees an ugly error page
+
+With exception handling:
+  The application handles the error GRACEFULLY → User sees a helpful message
+  
+In Flask APIs, this translates to:
+  return jsonify({"error": "Task not found"}), 404
+  return jsonify({"error": "Title is required"}), 400
+
+
+1. try
+------
+The 'try' block contains code that MIGHT cause an error.
+
+    try:
+        result = 10 / 0          ← This will cause an error
+        print(result)             ← This line NEVER runs
+    except:
+        print("An error occurred")
+
+Rules:
+  - Put only the "risky" code inside try
+  - If an error occurs, Python IMMEDIATELY jumps to except
+  - Code after the error line in try is SKIPPED
+
+
+2. except
+---------
+The 'except' block catches and handles the error.
+
+    # Catch a SPECIFIC error type:
+    try:
+        number = int("hello")
+    except ValueError:
+        print("That's not a valid number!")
+
+    # Catch MULTIPLE error types:
+    try:
+        task = tasks[10]
+    except IndexError:
+        print("Task not found!")
+    except KeyError:
+        print("Invalid key!")
+
+    # Catch the error object (to get details):
+    try:
+        number = int("hello")
+    except ValueError as e:
+        print(f"Error: {e}")    → Error: invalid literal for int() with base 10: 'hello'
+
+    # Catch ALL errors (use carefully):
+    try:
+        risky_operation()
+    except Exception as e:
+        print(f"Something went wrong: {e}")
+
+In Flask:
+    try:
+        data = request.get_json()
+        title = data["title"]
+    except (KeyError, TypeError):
+        return jsonify({"error": "Title is required"}), 400
+
+
+3. finally
+----------
+The 'finally' block ALWAYS runs — whether there was an error or not.
+Used for CLEANUP operations.
+
+    try:
+        file = open("data.txt")
+        data = file.read()
+    except FileNotFoundError:
+        print("File not found!")
+    finally:
+        file.close()              ← ALWAYS closes the file
+
+In Flask/Database:
+    try:
+        conn = sqlite3.connect("tasks.db")
+        conn.execute("INSERT INTO tasks ...")
+        conn.commit()
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+    finally:
+        conn.close()              ← ALWAYS close the database connection
+
+
+4. Raising Exceptions
+---------------------
+You can CREATE your own errors using 'raise'.
+
+    def set_status(status):
+        valid = ["pending", "in_progress", "completed"]
+        if status not in valid:
+            raise ValueError(f"Invalid status: {status}. Use: {valid}")
+        # ... continue if valid
+
+    # Custom Exception Class:
+    class TaskNotFoundError(Exception):
+        pass
+    
+    def get_task(task_id):
+        task = find_in_database(task_id)
+        if not task:
+            raise TaskNotFoundError(f"Task {task_id} not found")
+        return task
+
+In Flask:
+    if not data.get("title"):
+        return jsonify({"error": "Title is required"}), 400
+    # This is the HTTP equivalent of raising an exception
+
+
+5. Handling Application Errors
+------------------------------
+Pattern for handling errors in backend applications:
+
+    def create_task(title, description):
+        # Step 1: Validate input
+        if not title:
+            raise InvalidTaskDataError("Title is required")
+        
+        # Step 2: Try the operation
+        try:
+            task = Task(title, description)
+            save_to_database(task)
+            return task
+        except DatabaseError as e:
+            # Step 3: Handle specific errors
+            print(f"Database error: {e}")
+            return None
+        except Exception as e:
+            # Step 4: Handle unexpected errors
+            print(f"Unexpected error: {e}")
+            return None
+
+Multiple levels of error handling:
+    # Level 1: Route handler (app.py)
+    @app.route("/api/tasks", methods=["POST"])
+    def api_create_task():
+        try:
+            data = request.get_json()
+            if not data or not data.get("title"):
+                return jsonify({"error": "Title is required"}), 400
+            
+            task_id = create_task(data["title"])
+            return jsonify({"id": task_id}), 201
+        
+        except Exception as e:
+            return jsonify({"error": "Internal server error"}), 500
+
+    # Level 2: Global error handlers
+    @app.errorhandler(404)
+    def not_found(error):
+        return jsonify({"error": "Resource not found"}), 404
+
+    @app.errorhandler(500)
+    def server_error(error):
+        return jsonify({"error": "Internal server error"}), 500
+
+
+6. Importance of Error Handling in Backend Applications
+-------------------------------------------------------
+    Error in Code              →    HTTP Response to Client
+    ──────────────                   ──────────────────────
+    ValueError                 →    400 Bad Request
+    TaskNotFoundError          →    404 Not Found
+    PermissionError            →    403 Forbidden
+    DatabaseError              →    500 Internal Server Error
+    InvalidTaskDataError       →    400 Bad Request
+
+Good Error Handling:
+    ✓ Never show raw Python errors to users
+    ✓ Always return a helpful error message
+    ✓ Use appropriate HTTP status codes
+    ✓ Log errors for debugging
+    ✓ Handle both expected and unexpected errors
+
+Bad Error Handling:
+    ✗ Bare except: (catches EVERYTHING, hides bugs)
+    ✗ Printing errors but not returning proper responses
+    ✗ Ignoring errors silently
+    ✗ Showing stack traces to users
+
+
+Common Pattern in Flask:
+    @app.route("/api/tasks/<int:task_id>")
+    def get_task(task_id):
+        task = get_task_by_id(task_id)
+        
+        if not task:
+            return jsonify({"error": "Task not found"}), 404
+        
+        return jsonify(task_to_dict(task)), 200
+
+
+================================================================
+Code File: task_manager.py
+  - TaskNotFoundError, InvalidTaskDataError → Custom exceptions
+  - try/except in every CRUD operation
+  - finally block in delete_task()
+  - raise in validation logic
+  - Menu wrapped in try/except for user input errors
+================================================================

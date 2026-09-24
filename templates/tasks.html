@@ -1,0 +1,129 @@
+<!-- ============================================================ -->
+<!-- tasks.html — List All Tasks (Module 11, 12, 13)              -->
+<!-- ============================================================ -->
+<!-- Shows tasks in a table with Edit/Delete actions.              -->
+<!-- Users can search by title/description or filter by status.   -->
+<!--                                                               -->
+<!-- Module 11 — Flask Routing: links to dynamic routes            -->
+<!-- Module 12 — Query Parameters: search and status filter        -->
+<!-- Module 13 — Jinja2: for loops, if/else, filters, url_for     -->
+<!-- ============================================================ -->
+
+{% extends "base.html" %}
+
+{% block content %}
+<h1>All Tasks</h1>
+
+<!-- ===== Search Bar (Module 12 — Query Parameters) ===== -->
+<!--
+    GET /tasks/search?q=<query>
+    Module 12: request.args.get("q") reads the ?q=xxx part.
+    The search_tasks() function in database.py does a LIKE query.
+-->
+<form action="{{ url_for('tasks.search') }}" method="GET" style="margin-bottom: 12px;">
+    <input
+        type="text"
+        name="q"
+        id="search-input"
+        placeholder="Search tasks by title or description..."
+        value="{{ search_query }}"
+        style="padding: 8px; width: 70%; border: 1px solid #ccc;"
+    >
+    <button type="submit" class="btn" style="margin-left: 6px;">Search</button>
+    {% if search_query %}
+        <a href="{{ url_for('tasks.list_tasks') }}" class="btn" style="background:#6c757d; margin-left:4px;">Clear</a>
+    {% endif %}
+</form>
+
+<!-- ===== Search Results Notice (Module 13 — Jinja2 conditionals) ===== -->
+{% if search_query %}
+<p style="margin-bottom: 10px; color: #555;">
+    Showing results for: <strong>"{{ search_query }}"</strong>
+    ({{ tasks | length }} found)
+    {# Module 13 — Jinja2 Filters: | length counts items in a list #}
+</p>
+{% endif %}
+
+<!-- ===== Status Filter Links (Module 12 — Query Parameters) ===== -->
+<!--
+    These links add ?status=xxx to the URL.
+    url_for('tasks.list_tasks', status='pending') generates: /tasks?status=pending
+    In task_routes.py, request.args.get("status") reads this value.
+-->
+<div class="filter">
+    <span>Filter:</span>
+    <a href="{{ url_for('tasks.list_tasks') }}">All</a>
+    <a href="{{ url_for('tasks.list_tasks', status='pending') }}">Pending</a>
+    <a href="{{ url_for('tasks.list_tasks', status='in_progress') }}">In Progress</a>
+    <a href="{{ url_for('tasks.list_tasks', status='completed') }}">Completed</a>
+</div>
+
+<a href="{{ url_for('tasks.add_task') }}" class="btn">+ Add New Task</a>
+
+<!-- ===== Task Table (Module 13 — Jinja2 for loop) ===== -->
+{% if tasks %}
+{# Module 13 — {% if %}: only show table if there ARE tasks #}
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Title</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for task in tasks %}
+        {# Module 13 — {% for %}: loop through each task in the list #}
+        <tr>
+            <td>{{ task.id }}</td>
+            {# Module 13 — {{ }}: output the task's ID #}
+
+            <td>
+                <!-- Task title is a clickable link to the detail page -->
+                <!-- Module 11 — Dynamic Route: url_for generates /tasks/1 -->
+                <a href="{{ url_for('tasks.task_detail', task_id=task.id) }}">{{ task.title }}</a>
+            </td>
+
+            <td>
+                <!-- Status badge with color based on status -->
+                <span class="badge {{ task.status }}">{{ task.status }}</span>
+                <!--
+                    Module 13 — Jinja2 dynamic CSS classes:
+                    class="badge pending"     → yellow background (from CSS)
+                    class="badge in_progress" → blue background
+                    class="badge completed"   → green background
+                -->
+            </td>
+
+            <td>
+                <!-- Edit link → goes to the edit form -->
+                <a href="{{ url_for('tasks.edit_task', task_id=task.id) }}">Edit</a>
+
+                <!-- Delete link → deletes the task after confirmation -->
+                <a href="{{ url_for('tasks.delete_task_route', task_id=task.id) }}"
+                   onclick="return confirm('Delete this task?')">Delete</a>
+                <!--
+                    onclick="return confirm(...)" shows a browser popup asking
+                    "Delete this task?" with OK/Cancel buttons.
+                    If user clicks Cancel, the link is NOT followed.
+                -->
+            </td>
+        </tr>
+        {% endfor %}
+        {# Module 13 — endfor closes the loop #}
+    </tbody>
+</table>
+
+{% else %}
+{# Module 13 — {% else %}: runs when there are NO tasks #}
+<p>No tasks found.
+    {% if search_query %}
+        Try a different search term or <a href="{{ url_for('tasks.list_tasks') }}">view all tasks</a>.
+    {% else %}
+        <a href="{{ url_for('tasks.add_task') }}">Add your first task!</a>
+    {% endif %}
+</p>
+{% endif %}
+
+{% endblock %}

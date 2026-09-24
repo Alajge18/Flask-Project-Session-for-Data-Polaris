@@ -1,0 +1,52 @@
+<!-- ============================================================ -->
+<!-- task_detail.html — Show One Task's Details (Module 11)        -->
+<!-- ============================================================ -->
+<!-- Displays all information about a single task.                 -->
+<!-- Module 11 — Dynamic Routes: /tasks/<int:task_id>              -->
+<!-- The 'task' variable comes from task_routes.py:                -->
+<!--   task = get_task_by_id(task_id)                              -->
+<!--   return render_template("task_detail.html", task=task)       -->
+<!-- ============================================================ -->
+
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1>Task #{{ task.id }}</h1>
+<!-- Module 13 — Jinja2: {{ task.id }} outputs the task ID -->
+
+<div class="detail">
+    <p><strong>Title:</strong> {{ task.title }}</p>
+
+    <p><strong>Description:</strong> {{ task.description or "No description" }}</p>
+    <!-- Module 13 — Jinja2: "or" operator
+         If description is empty/None, show "No description" instead of blank space.
+         The "or" works like a fallback value.
+    -->
+
+    <p><strong>Status:</strong> <span class="badge {{ task.status }}">{{ task.status }}</span></p>
+    <!-- Badge with color: pending=yellow, in_progress=blue, completed=green -->
+
+    <p><strong>Created:</strong> {{ task.created_at }}</p>
+    <!-- Module 18 — SQLite: created_at is auto-filled by the database -->
+
+    {% if task.user_id %}
+    <p><strong>User ID:</strong> {{ task.user_id }}</p>
+    <!-- Module 18 — Foreign Key: shows which user owns this task -->
+    {% endif %}
+</div>
+
+<!-- ===== Action Buttons ===== -->
+<div class="actions">
+    <a href="{{ url_for('tasks.edit_task', task_id=task.id) }}" class="btn">Edit</a>
+    <!-- Goes to the edit form for this task -->
+
+    <a href="{{ url_for('tasks.delete_task_route', task_id=task.id) }}" class="btn btn-danger"
+       onclick="return confirm('Delete this task?')">Delete</a>
+    <!-- Red button. Shows confirmation popup before deleting. -->
+
+    <a href="{{ url_for('tasks.list_tasks') }}" class="btn btn-secondary">Back to Tasks</a>
+    <!-- Goes back to the full task list -->
+</div>
+
+{% endblock %}

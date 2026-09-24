@@ -1,0 +1,242 @@
+================================================================
+MODULE 7 — Backend Fundamentals
+================================================================
+Day 2 | Backend Fundamentals and First Flask Application
+================================================================
+
+1. What is Backend?
+-------------------
+The BACKEND is the part of an application that users DON'T see.
+It runs on a SERVER and handles:
+  - Processing requests from users
+  - Running business logic
+  - Reading/writing to the database
+  - Sending responses back
+
+    Frontend (what users see)
+      ↓
+    HTTP Request (user clicks a button, submits a form)
+      ↓
+    Backend (your Flask app processes the request)
+      ↓
+    Business Logic (validate data, apply rules)
+      ↓
+    Database (read/store data in SQLite)
+      ↓
+    HTTP Response (send result back)
+      ↓
+    Frontend (shows the result to the user)
+
+
+2. Client
+---------
+The CLIENT is the program that SENDS requests to the server.
+
+Examples of clients:
+  - Web browser (Chrome, Firefox)
+  - Mobile app (Android, iOS)
+  - Postman (API testing tool)
+  - curl (command-line tool)
+  - Another server (server-to-server communication)
+
+The client:
+  1. Sends a REQUEST to the server
+  2. Waits for the RESPONSE
+  3. Displays the result to the user
+
+
+3. Server
+---------
+The SERVER is a computer (or program) that RECEIVES requests 
+and SENDS responses.
+
+Your Flask app IS a server:
+  python app.py
+  → Running on http://127.0.0.1:5000
+
+  127.0.0.1 = "localhost" = YOUR computer
+  5000 = the PORT number (like a door number)
+
+In production:
+  Your Flask app runs on a cloud server (Render, Vercel)
+  with a public URL like: https://taskflow.onrender.com
+
+
+4. HTTP (HyperText Transfer Protocol)
+--------------------------------------
+HTTP is the LANGUAGE that clients and servers use to communicate.
+
+Every web interaction follows this pattern:
+  Client sends HTTP Request → Server processes → Server sends HTTP Response
+
+HTTP Request contains:
+  - Method (GET, POST, PUT, DELETE)
+  - URL (/tasks, /api/tasks/1)
+  - Headers (metadata — content type, authentication)
+  - Body (data — JSON, form data)
+
+HTTP Response contains:
+  - Status Code (200, 404, 500)
+  - Headers (content type, cookies)
+  - Body (HTML page or JSON data)
+
+
+5. Request
+----------
+A REQUEST is what the client sends to the server.
+
+    GET /tasks HTTP/1.1
+    Host: localhost:5000
+    Accept: application/json
+
+In Flask:
+    from flask import request
+    
+    request.method          → "GET", "POST", "PUT", "DELETE"
+    request.url             → "http://localhost:5000/tasks?status=pending"
+    request.args            → {"status": "pending"}     (query parameters)
+    request.form            → {"title": "Learn Flask"}  (form data)
+    request.json            → {"title": "Learn Flask"}  (JSON body)
+    request.headers         → {"Content-Type": "application/json"}
+
+
+6. Response
+-----------
+A RESPONSE is what the server sends back to the client.
+
+    HTTP/1.1 200 OK
+    Content-Type: application/json
+    
+    {"id": 1, "title": "Learn Flask", "status": "pending"}
+
+In Flask:
+    return "Hello World"                              → Text response (200)
+    return render_template("index.html")              → HTML response (200)
+    return jsonify({"id": 1, "title": "Flask"})       → JSON response (200)
+    return jsonify({"error": "Not found"}), 404       → JSON error (404)
+
+
+7. URL (Uniform Resource Locator)
+---------------------------------
+A URL identifies a RESOURCE on the server.
+
+    http://localhost:5000/api/tasks?status=pending
+    ├── http://              ← Protocol
+    ├── localhost:5000       ← Server address and port
+    ├── /api/tasks           ← Path (Route)
+    └── ?status=pending      ← Query parameters
+
+
+8. Route
+--------
+A ROUTE is a URL pattern that maps to a function in your app.
+
+    @app.route("/")               ← Route: /
+    def home():                   ← Handler function
+        return "Home Page"
+
+    @app.route("/tasks")          ← Route: /tasks
+    def get_tasks():
+        return jsonify(tasks)
+
+    @app.route("/tasks/<int:id>") ← Route: /tasks/1, /tasks/2, etc.
+    def get_task(id):
+        return jsonify(tasks[id])
+
+
+9. Endpoint
+-----------
+An ENDPOINT is a specific Route + HTTP Method combination.
+
+    GET  /tasks         ← Endpoint 1: List all tasks
+    POST /tasks         ← Endpoint 2: Create a task
+    GET  /tasks/1       ← Endpoint 3: Get task #1
+    PUT  /tasks/1       ← Endpoint 4: Update task #1
+    DELETE /tasks/1     ← Endpoint 5: Delete task #1
+
+Same URL (/tasks) can have MULTIPLE endpoints (different methods).
+
+
+10. Headers
+-----------
+Headers are METADATA sent with requests and responses.
+
+Common Request Headers:
+    Content-Type: application/json     ← "I'm sending JSON data"
+    Accept: application/json           ← "I want JSON back"
+    Authorization: Bearer <token>      ← "Here's my login token"
+
+Common Response Headers:
+    Content-Type: text/html            ← "I'm sending HTML"
+    Content-Type: application/json     ← "I'm sending JSON"
+
+
+11. Body
+--------
+The BODY contains the actual DATA sent with a request or response.
+
+Request body (client → server):
+    POST /api/tasks
+    Body: {"title": "Learn Flask", "description": "Study the docs"}
+
+Response body (server → client):
+    {"id": 1, "title": "Learn Flask", "status": "pending"}
+
+
+12. JSON
+--------
+JSON (JavaScript Object Notation) is the standard format for 
+API communication. It looks like a Python dictionary:
+
+    {
+        "id": 1,
+        "title": "Learn Flask",
+        "status": "pending",
+        "tags": ["python", "web"]
+    }
+
+(Covered in detail in Module 4)
+
+
+13. Basic Backend Architecture
+------------------------------
+    ┌──────────┐
+    │  Client  │ (Browser, Postman, Mobile App)
+    └────┬─────┘
+         │ HTTP Request
+         ▼
+    ┌──────────┐
+    │  Flask   │ (Route Handler)
+    │  Server  │
+    └────┬─────┘
+         │ Function Call
+         ▼
+    ┌──────────┐
+    │ Business │ (Validation, Logic)
+    │  Logic   │
+    └────┬─────┘
+         │ Database Query
+         ▼
+    ┌──────────┐
+    │ Database │ (SQLite)
+    └────┬─────┘
+         │ Result
+         ▼
+    ┌──────────┐
+    │  Flask   │ (Format Response)
+    │  Server  │
+    └────┬─────┘
+         │ HTTP Response
+         ▼
+    ┌──────────┐
+    │  Client  │ (Shows Result)
+    └──────────┘
+
+
+================================================================
+Code File: app.py (Module 10)
+  - These concepts are implemented in app.py routes
+  - request object for reading client data
+  - jsonify() for sending JSON responses
+  - Status codes for error handling
+================================================================

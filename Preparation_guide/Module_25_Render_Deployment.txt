@@ -1,0 +1,146 @@
+================================================================
+MODULE 25 — Render Deployment
+================================================================
+Day 6 | Production, GitHub and Deployment
+================================================================
+
+MANDATORY HANDS-ON: Every student deploys to Render.
+
+
+1. What is Render?
+-------------------
+Render is a CLOUD PLATFORM that hosts your web applications.
+It takes your code from GitHub and makes it available on the internet.
+
+    Local: http://127.0.0.1:5000 (only you)
+    Render: https://taskflow.onrender.com (anyone on internet)
+
+
+2. Deployment Flow
+-------------------
+    Flask Application (your code)
+         ↓
+    GitHub Repository (push your code)
+         ↓
+    Render (pulls from GitHub)
+         ↓
+    Live Backend (accessible worldwide)
+
+Steps:
+    1. Push code to GitHub
+    2. Connect Render to your GitHub repo
+    3. Render builds and deploys automatically
+    4. Get a live URL
+
+
+3. Prerequisites
+-----------------
+    Your project needs:
+      ✓ requirements.txt (with gunicorn)
+      ✓ Procfile (tells Render how to start your app)
+      ✓ Code on GitHub
+
+
+4. Procfile
+------------
+    The Procfile tells Render WHICH command to run:
+
+    web: gunicorn app:app
+
+    Breaking it down:
+        web:          → This is a web service
+        gunicorn      → Use gunicorn (production web server)
+        app:app       → module_name:variable_name
+                        → First "app" = app.py (the file)
+                        → Second "app" = app (the Flask object in the file)
+
+    Why gunicorn instead of app.run()?
+        Flask's built-in server:
+          ✗ Handles ONE request at a time
+          ✗ Not designed for production
+          ✗ Can crash under load
+
+        gunicorn:
+          ✓ Handles MANY requests simultaneously
+          ✓ Designed for production
+          ✓ Stable and reliable
+
+
+5. Deploying to Render — Step by Step
+--------------------------------------
+
+    Step 1: Sign up at render.com (free tier available)
+
+    Step 2: Click "New" → "Web Service"
+
+    Step 3: Connect your GitHub account
+
+    Step 4: Select your repository (task-management)
+
+    Step 5: Configure:
+        Name:           taskflow
+        Environment:    Python
+        Build Command:  pip install -r requirements.txt
+        Start Command:  gunicorn app:app
+        Plan:           Free
+
+    Step 6: Add Environment Variables:
+        SECRET_KEY = (generate a random string)
+
+    Step 7: Click "Create Web Service"
+
+    Step 8: Wait for deployment (2-5 minutes)
+
+    Step 9: Your app is live at:
+        https://taskflow.onrender.com
+
+
+6. Testing the Live Backend
+-----------------------------
+    Once deployed, test with Postman:
+
+    Base URL: https://taskflow.onrender.com
+
+    GET  /api/tasks                    → List all tasks
+    POST /api/tasks                    → Create a task
+    GET  /api/tasks/1                  → Get task #1
+    PUT  /api/tasks/1                  → Update task #1
+    DELETE /api/tasks/1                → Delete task #1
+
+    Also test in browser:
+    https://taskflow.onrender.com      → Homepage
+    https://taskflow.onrender.com/tasks → Task list
+
+
+7. Common Issues
+-----------------
+    Issue: "ModuleNotFoundError: No module named 'flask'"
+    Fix: Make sure requirements.txt has all dependencies
+
+    Issue: "Error: gunicorn: not found"
+    Fix: Add gunicorn to requirements.txt
+
+    Issue: App crashes on start
+    Fix: Check Render logs for error messages
+
+    Issue: Database resets on every deploy
+    Fix: SQLite stores data in a file. On Render's free tier,
+         the file system is ephemeral (resets on deploy).
+         For persistent data, use PostgreSQL (future topic).
+
+
+Free Tier Limitations
+----------------------
+    Render free tier:
+      - App sleeps after 15 minutes of inactivity
+      - First request after sleep takes ~30 seconds
+      - 750 hours/month of runtime
+      - SQLite data resets on deploy
+      - Perfect for learning and portfolio projects
+
+
+================================================================
+Code Files:
+  Procfile         — web: gunicorn app:app
+  requirements.txt — gunicorn==23.0.0 added
+================================================================

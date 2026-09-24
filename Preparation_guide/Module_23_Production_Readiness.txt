@@ -1,0 +1,173 @@
+================================================================
+MODULE 23 — Production Readiness
+================================================================
+Day 6 | Production, GitHub and Deployment
+================================================================
+
+Your app works on localhost. Now let's make it ready for the 
+REAL WORLD (production).
+
+
+1. Development vs Production
+------------------------------
+    Development (localhost):
+      ✓ Debug mode ON → detailed error pages
+      ✓ Auto-reload → server restarts on code change
+      ✓ Only YOU can access it
+      ✓ Hardcoded secrets → fine for testing
+
+    Production (live server):
+      ✗ Debug mode OFF → NEVER show detailed errors to users
+      ✓ Stable → no auto-reload
+      ✓ Anyone on the internet can access it
+      ✓ Secrets in environment variables → NEVER in code
+
+
+2. Debug Mode
+--------------
+    Development:
+        app.run(debug=True)       ← Shows detailed error pages
+    
+    Production:
+        app.run(debug=False)      ← Shows generic error pages
+    
+    WHY?
+        Debug mode shows:
+          - Your source code
+          - File paths on your server
+          - Variable values
+          - An interactive debugger
+        
+        A hacker could use this information to exploit your app!
+
+
+3. Environment Variables
+-------------------------
+Environment variables store SENSITIVE configuration OUTSIDE your code.
+
+    WHY?
+        BAD (hardcoded — visible in GitHub):
+            app.config["SECRET_KEY"] = "my-super-secret-key"
+        
+        GOOD (from environment — not in code):
+            app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY")
+
+    Setting environment variables:
+        Windows:
+            set SECRET_KEY=my-super-secret-key
+        
+        Mac/Linux:
+            export SECRET_KEY=my-super-secret-key
+        
+        On Render: Set in the dashboard (Environment section)
+
+    In Python:
+        import os
+        secret_key = os.environ.get("SECRET_KEY", "default-for-dev")
+        # The second argument is a DEFAULT for development
+
+
+4. Secret Keys
+---------------
+    SECRET_KEY is used for:
+      - CSRF protection (Flask-WTF forms)
+      - Session data encryption
+      - Flash message signing
+
+    Rules:
+      ✓ Use a long, random string
+      ✓ Keep it SECRET (not in code, not on GitHub)
+      ✓ Different for development and production
+
+    Generate a good secret key:
+        import secrets
+        print(secrets.token_hex(32))
+        # Example: "a1b2c3d4e5f6..."
+
+
+5. Requirements Management
+---------------------------
+    requirements.txt must list ALL dependencies:
+    
+        Flask==3.1.1
+        Flask-WTF==1.2.2
+        WTForms==3.2.1
+        gunicorn==23.0.0
+
+    gunicorn is a production web server:
+      - Flask's built-in server is for DEVELOPMENT only
+      - gunicorn handles multiple users simultaneously
+      - Render uses gunicorn to run your app
+
+    Keep versions PINNED (==) so your app works the same everywhere.
+
+
+6. Configuration Class
+-----------------------
+    # config.py
+    import os
+
+    class Config:
+        SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-key")
+        DATABASE = os.environ.get("DATABASE", "tasks.db")
+        DEBUG = False
+
+    # app.py
+    from config import Config
+    app.config.from_object(Config)
+
+
+7. Project Structure (Production)
+----------------------------------
+    task-management/
+    ├── app.py               ← Main application
+    ├── config.py            ← Configuration (env vars)
+    ├── database.py          ← Database operations
+    ├── models.py            ← Data helpers
+    ├── forms.py             ← Form classes
+    ├── requirements.txt     ← Dependencies (with gunicorn)
+    ├── Procfile             ← Tells Render how to run the app
+    ├── .gitignore           ← Files to exclude from Git
+    ├── README.md            ← Project documentation
+    ├── routes/              ← Route handlers
+    ├── templates/           ← HTML templates
+    └── static/              ← CSS, JS, images
+
+
+8. Error Handling (Production)
+-------------------------------
+    In production, show GENERIC error messages:
+
+    @app.errorhandler(404)
+    def not_found(error):
+        return jsonify({"error": "Resource not found"}), 404
+
+    @app.errorhandler(500)
+    def server_error(error):
+        return jsonify({"error": "Something went wrong"}), 500
+
+    NEVER show:
+      ✗ Stack traces
+      ✗ File paths
+      ✗ Database queries
+      ✗ Variable values
+
+
+Production Checklist
+---------------------
+    ✓ Debug mode OFF
+    ✓ SECRET_KEY from environment variable
+    ✓ All dependencies in requirements.txt
+    ✓ gunicorn in requirements.txt
+    ✓ Procfile for deployment
+    ✓ .gitignore excludes sensitive files
+    ✓ Error handlers return generic messages
+    ✓ No hardcoded secrets in code
+
+
+================================================================
+Code Files:
+  config.py        — Config class with os.environ.get()
+  app.py           — app.config.from_object(Config)
+  requirements.txt — gunicorn added
+================================================================

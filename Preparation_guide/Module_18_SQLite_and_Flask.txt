@@ -1,0 +1,198 @@
+================================================================
+MODULE 18 — SQLite and Flask Integration
+================================================================
+Day 4 | Database and SQLite
+================================================================
+
+1. SQLite
+---------
+SQLite is a LIGHTWEIGHT database that stores everything 
+in a single file. No server installation needed!
+
+    Features:
+      ✓ Built into Python (import sqlite3)
+      ✓ No separate server to install or manage
+      ✓ Single file: tasks.db
+      ✓ Perfect for learning and small apps
+      ✓ Used by Android, iOS, browsers internally
+
+    Our database file: tasks.db
+      - Created automatically when the app first runs
+      - Contains all our data (users, tasks)
+      - Can be opened with SQLite viewers (DB Browser for SQLite)
+
+
+2. Creating tasks.db
+--------------------
+    import sqlite3
+
+    DATABASE = "tasks.db"
+
+    def get_db():
+        conn = sqlite3.connect(DATABASE)
+        conn.row_factory = sqlite3.Row
+        return conn
+
+    Breaking it down:
+        sqlite3.connect("tasks.db")
+          → Opens tasks.db (creates it if it doesn't exist)
+          → Returns a connection object
+
+        conn.row_factory = sqlite3.Row
+          → Changes how rows are returned
+          → Without: (1, "Learn Flask", "pending")     ← tuple (access by index)
+          → With:    row["title"] → "Learn Flask"      ← dict-like (access by name)
+
+
+3. Users Table
+--------------
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        email TEXT NOT NULL UNIQUE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    Example data:
+    ┌────┬────────┬──────────────────┬─────────────────────┐
+    │ id │ name   │ email            │ created_at          │
+    ├────┼────────┼──────────────────┼─────────────────────┤
+    │  1 │ Alice  │ alice@email.com  │ 2025-01-15 10:00:00 │
+    │  2 │ Bob    │ bob@email.com    │ 2025-01-15 11:00:00 │
+    └────┴────────┴──────────────────┴─────────────────────┘
+
+
+4. Tasks Table
+--------------
+    CREATE TABLE IF NOT EXISTS tasks (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        title TEXT NOT NULL,
+        description TEXT,
+        status TEXT NOT NULL DEFAULT 'pending',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id)
+    );
+
+    Example data:
+    ┌────┬─────────┬──────────────┬─────────────┬───────────┐
+    │ id │ user_id │ title        │ description │ status    │
+    ├────┼─────────┼──────────────┼─────────────┼───────────┤
+    │  1 │    1    │ Learn Flask  │ Study docs  │ pending   │
+    │  2 │    1    │ Build API    │ CRUD tasks  │ in_progress│
+    │  3 │    2    │ Deploy App   │ Use Render  │ completed │
+    └────┴─────────┴──────────────┴─────────────┴───────────┘
+
+
+5. User–Task Relationship
+--------------------------
+    One user can have MANY tasks (One-to-Many):
+
+        User "Alice" (id=1)
+        │
+        ├── Task "Learn Flask" (user_id=1)
+        ├── Task "Build API" (user_id=1)
+        └── (any number of tasks)
+
+        User "Bob" (id=2)
+        │
+        └── Task "Deploy App" (user_id=2)
+
+    The FOREIGN KEY creates this relationship:
+        FOREIGN KEY (user_id) REFERENCES users(id)
+
+    This means:
+      - tasks.user_id MUST match an existing users.id
+      - If user_id=99 and there's no user with id=99, it's an error
+      - A task "belongs to" a user through user_id
+
+
+6. Flask + SQLite Architecture
+-------------------------------
+    Client (Browser/Postman)
+         ↓ HTTP Request
+    Flask Route (app.py)
+         ↓ Function Call
+    Business Logic (validation, etc.)
+         ↓ Function Call
+    Database Operations (database.py)
+         ↓ SQL Query
+    SQLite (tasks.db file)
+         ↓ Result
+    Database Operations
+         ↓ Return Data
+    Flask Route
+         ↓ HTTP Response
+    Client
+
+    Key insight:
+        Flask is NOT the database.
+        Flask COMMUNICATES with the database.
+        database.py is the BRIDGE between Flask and SQLite.
+
+
+7. Database Persistence
+------------------------
+    WITHOUT database (in-memory):
+        Server starts → tasks = [] → empty
+        Add tasks → tasks = [task1, task2]
+        Server restarts → tasks = [] → ALL GONE! ✗
+
+    WITH database (SQLite):
+        Server starts → reads from tasks.db → has all data
+        Add tasks → saves to tasks.db
+        Server restarts → reads from tasks.db → ALL DATA STILL THERE! ✓
+
+    This is why we switched from a Python list to SQLite.
+
+
+Database Operations Pattern
+-----------------------------
+Every database function follows this pattern:
+
+    def some_db_function(params):
+        conn = get_db()           # 1. Open connection
+        result = conn.execute(    # 2. Run SQL
+            "SQL QUERY HERE",
+            (params,)
+        ).fetchall()              # 3. Get results
+        conn.commit()             # 4. Save changes (if INSERT/UPDATE/DELETE)
+        conn.close()              # 5. Close connection
+        return result             # 6. Return data
+
+    Steps:
+        1. CONNECT to the database
+        2. EXECUTE the SQL command
+        3. FETCH the results (for SELECT)
+        4. COMMIT the changes (for INSERT/UPDATE/DELETE)
+        5. CLOSE the connection
+        6. RETURN the data
+
+
+Initializing the Database
+--------------------------
+    # In app.py — runs when the app starts
+    with app.app_context():
+        init_db()
+
+    # In database.py
+    def init_db():
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("CREATE TABLE IF NOT EXISTS users ...")
+        cursor.execute("CREATE TABLE IF NOT EXISTS tasks ...")
+        conn.commit()
+        conn.close()
+
+    app_context() is needed because:
+      - Database operations in Flask need the app to be "active"
+      - This ensures Flask's configuration is available
+      - It's a Flask requirement for certain operations
+
+
+================================================================
+Code Files:
+  database.py  — get_db(), init_db(), all CRUD functions
+  models.py    — task_to_dict(), user_to_dict(), VALID_STATUSES
+  app.py       — init_db() called on startup, routes use db functions
+================================================================

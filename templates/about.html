@@ -1,0 +1,52 @@
+<!-- ============================================================ -->
+<!-- about.html — About Page (Module 10)                          -->
+<!-- ============================================================ -->
+<!-- A simple static page introduced in Module 10.                -->
+<!-- Demonstrates the /about route and template inheritance.      -->
+<!-- ============================================================ -->
+
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="welcome-header">
+    <h1>About TaskFlow</h1>
+    <p>A Flask-based Task Management System built during the Data Polaris Workshop.</p>
+</div>
+
+<div class="detail">
+    <h2>What is TaskFlow?</h2>
+    <p>
+        TaskFlow is a personal task management system that lets you
+        create, view, update, and delete tasks. It was built step-by-step
+        across a 6-day workshop covering Python, Flask, SQLite, and deployment.
+    </p>
+
+    <h2>Technology Stack</h2>
+    <ul>
+        <li><strong>Python</strong> — Programming Language</li>
+        <li><strong>Flask</strong> — Web Framework</li>
+        <li><strong>SQLite</strong> — Database</li>
+        <li><strong>Flask-WTF</strong> — Form Validation</li>
+        <li><strong>Jinja2</strong> — Template Engine</li>
+        <li><strong>HTML/CSS</strong> — Frontend</li>
+    </ul>
+
+    <h2>Features</h2>
+    <ul>
+        <li>✓ Create, Read, Update, Delete tasks</li>
+        <li>✓ Filter tasks by status</li>
+        <li>✓ Search tasks by title/description</li>
+        <li>✓ REST API with JSON responses</li>
+        <li>✓ Form validation with Flask-WTF</li>
+        <li>✓ Dashboard with task statistics</li>
+        <li>✓ SQLite database for persistence</li>
+    </ul>
+</div>
+
+<div class="actions">
+    <a href="{{ url_for('tasks.list_tasks') }}" class="btn">View Tasks</a>
+    <a href="{{ url_for('tasks.add_task') }}" class="btn btn-secondary">Add a Task</a>
+</div>
+
+{% endblock %}

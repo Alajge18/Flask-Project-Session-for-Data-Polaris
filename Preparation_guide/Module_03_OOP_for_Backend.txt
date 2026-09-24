@@ -1,0 +1,183 @@
+================================================================
+MODULE 3 — Object-Oriented Programming for Backend
+================================================================
+Day 1 | Python for Backend Development
+================================================================
+
+What is OOP?
+------------
+Object-Oriented Programming (OOP) is a way to organize code by 
+grouping RELATED data and functions together into "classes".
+
+Without OOP (procedural):
+    task = {"id": 1, "title": "Learn Flask", "status": "pending"}
+    
+    def mark_complete(task):
+        task["status"] = "completed"
+
+With OOP:
+    task = Task(1, "Learn Flask")
+    task.mark_complete()       ← The function BELONGS to the task
+
+OOP makes code:
+  ✓ Organized — related things stay together
+  ✓ Reusable — create as many tasks as you need
+  ✓ Maintainable — changes in one place affect all instances
+
+
+1. Classes
+----------
+A class is a BLUEPRINT (template) for creating objects.
+
+    class Task:           ← Blueprint definition
+        pass
+    
+    task = Task()         ← Creating an object FROM the blueprint
+
+Think of it like:
+    Class  = Cookie cutter (the shape)
+    Object = Cookie (the actual thing)
+
+You write the class ONCE, then create MANY objects from it.
+
+
+2. Objects
+----------
+An object is a SPECIFIC INSTANCE created from a class.
+
+    task1 = Task(1, "Learn Flask")      ← Object 1
+    task2 = Task(2, "Build API")        ← Object 2
+
+    task1 and task2 are SEPARATE objects.
+    Changing task1 does NOT affect task2.
+
+In Flask:
+    app = Flask(__name__)    ← 'app' is an OBJECT of the Flask class
+    form = AddTaskForm()     ← 'form' is an OBJECT of the AddTaskForm class
+
+
+3. __init__() — The Constructor
+-------------------------------
+__init__() is a SPECIAL method that runs AUTOMATICALLY when you 
+create an object. It sets up the initial values.
+
+    class Task:
+        def __init__(self, task_id, title):
+            self.id = task_id          ← Set initial values
+            self.title = title
+            self.status = "pending"    ← Default value
+    
+    task = Task(1, "Learn Flask")      ← __init__ runs here!
+    # Now: task.id = 1, task.title = "Learn Flask", task.status = "pending"
+
+'self' = refers to THIS specific object being created.
+
+In Flask-WTF:
+    class AddTaskForm(FlaskForm):
+        title = StringField("Title", validators=[DataRequired()])
+        # FlaskForm's __init__ sets up all the fields
+
+
+4. Instance Attributes
+----------------------
+Instance attributes are VARIABLES that belong to a specific object.
+They are set using self.attribute_name in __init__().
+
+    class Task:
+        def __init__(self, title):
+            self.title = title         ← Instance attribute
+            self.status = "pending"    ← Instance attribute
+    
+    task1 = Task("Learn Flask")
+    task2 = Task("Build API")
+    
+    print(task1.title)    → "Learn Flask"
+    print(task2.title)    → "Build API"
+    # Each object has its OWN copy of the attributes
+
+
+5. Methods
+----------
+Methods are FUNCTIONS that belong to a class.
+They always take 'self' as the first parameter.
+
+    class Task:
+        def __init__(self, title):
+            self.title = title
+            self.status = "pending"
+        
+        def mark_complete(self):           ← Method
+            self.status = "completed"
+        
+        def to_dict(self):                 ← Method
+            return {
+                "title": self.title,
+                "status": self.status
+            }
+    
+    task = Task("Learn Flask")
+    task.mark_complete()                   ← Call the method
+    print(task.to_dict())                  ← Returns dictionary
+
+In Flask:
+    form = AddTaskForm()
+    form.validate_on_submit()     ← Method of FlaskForm class
+
+
+6. Encapsulation
+----------------
+Encapsulation means HIDING the internal details of a class.
+The outside world uses methods — it doesn't touch internal data directly.
+
+    class TaskManager:
+        def __init__(self):
+            self._tasks = []          ← Private (starts with _)
+        
+        def add_task(self, title):     ← Public method
+            task = Task(title)
+            self._tasks.append(task)
+        
+        def get_all_tasks(self):       ← Public method
+            return self._tasks
+
+    manager = TaskManager()
+    manager.add_task("Learn Flask")    ← Uses public method ✓
+    # manager._tasks.append(...)       ← Directly accessing = BAD ✗
+
+In Flask:
+    app.py calls database.py functions (public interface)
+    app.py does NOT write SQL directly (internal detail)
+
+
+How OOP Connects to Flask
+-------------------------
+Flask uses OOP extensively:
+
+    1. Flask App:
+       app = Flask(__name__)
+       # Flask is a CLASS, app is an OBJECT
+
+    2. Form Classes (Flask-WTF):
+       class AddTaskForm(FlaskForm):
+           title = StringField("Title")
+       # FlaskForm is a CLASS we INHERIT from
+
+    3. Configuration:
+       class Config:
+           SECRET_KEY = "my-secret"
+           DATABASE = "tasks.db"
+       app.config.from_object(Config)
+
+    4. Database Models (if using SQLAlchemy):
+       class Task(db.Model):
+           id = db.Column(db.Integer)
+           title = db.Column(db.String)
+
+
+================================================================
+Code File: task_manager.py
+  - class Task → __init__, instance attributes, methods, to_dict()
+  - class TaskManager → encapsulation with _tasks list
+  - Task.mark_complete() → method example
+  - Task.to_dict() → converting object to dictionary
+================================================================

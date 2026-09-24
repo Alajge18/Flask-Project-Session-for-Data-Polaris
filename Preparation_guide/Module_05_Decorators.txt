@@ -1,0 +1,187 @@
+================================================================
+MODULE 5 — Decorators
+================================================================
+Day 1 | Python for Backend Development
+================================================================
+
+SPECIAL IMPORTANCE:
+Decorators are FUNDAMENTAL to understanding Flask routes.
+Every Flask route uses @app.route() — which IS a decorator.
+Master this concept, and Flask becomes much easier.
+
+
+1. What are Decorators?
+-----------------------
+A decorator is a function that MODIFIES another function's behavior 
+WITHOUT changing its code.
+
+Think of it as WRAPPING a gift:
+    The gift (original function) stays the same.
+    The wrapping paper (decorator) adds something extra around it.
+
+Simple example:
+    @my_decorator        ← The decorator
+    def say_hello():     ← The original function
+        print("Hello!")
+
+When you call say_hello(), the decorator can:
+    - Run code BEFORE say_hello()
+    - Run code AFTER say_hello()
+    - Modify the input or output
+    - Skip the function entirely (e.g., for authentication)
+
+
+2. Creating Decorators
+----------------------
+A decorator is just a function that:
+    1. Takes a function as input
+    2. Creates a wrapper function
+    3. Returns the wrapper
+
+    def my_decorator(func):           ← Step 1: Receives the function
+        def wrapper():                ← Step 2: Creates wrapper
+            print("Before")           ← Code that runs BEFORE
+            func()                    ← Calls the ORIGINAL function
+            print("After")            ← Code that runs AFTER
+        return wrapper                ← Step 3: Returns the wrapper
+
+
+3. Wrapper Functions
+--------------------
+The wrapper function is the "new version" of the original function.
+When you use @my_decorator, Python replaces the original function 
+with the wrapper.
+
+    @my_decorator
+    def say_hello():
+        print("Hello!")
+
+    # Python does this internally:
+    # say_hello = my_decorator(say_hello)
+    # Now say_hello IS the wrapper function
+
+    say_hello()
+    # Output:
+    #   Before
+    #   Hello!
+    #   After
+
+
+4. Function Decoration with Arguments
+--------------------------------------
+To handle functions with parameters, use *args and **kwargs:
+
+    def log_operation(func):
+        def wrapper(*args, **kwargs):          ← Accept ANY arguments
+            print(f"Calling: {func.__name__}")
+            result = func(*args, **kwargs)     ← Pass them through
+            print(f"Done: {func.__name__}")
+            return result                      ← Return the result
+        return wrapper
+
+    @log_operation
+    def add_task(title, status="pending"):
+        print(f"Adding: {title}")
+        return {"title": title, "status": status}
+
+    add_task("Learn Flask")
+    # Output:
+    #   Calling: add_task
+    #   Adding: Learn Flask
+    #   Done: add_task
+
+
+5. Flask Route Decorators
+-------------------------
+Flask's @app.route() is a DECORATOR that:
+    1. Takes a URL path as an argument
+    2. Registers the function as a route handler
+    3. When someone visits that URL, Flask calls the function
+
+    @app.route("/tasks")
+    def get_tasks():
+        return "All Tasks"
+
+    # Internally, Flask does something like:
+    # 1. Store: URL "/tasks" → function get_tasks
+    # 2. When browser visits /tasks → call get_tasks()
+    # 3. Send the return value back to the browser
+
+This is called a DECORATOR FACTORY — a function that CREATES decorators:
+
+    @app.route("/tasks")              ← app.route("/tasks") creates a decorator
+    @app.route("/tasks/<int:id>")     ← app.route("/tasks/<int:id>") creates another
+    @app.route("/tasks", methods=["POST"])  ← with HTTP method restriction
+
+
+6. @app.route() — How It Works
+-------------------------------
+    @app.route("/")
+    def home():
+        return "Hello Flask!"
+
+Breaking it down:
+    @app.route("/")
+      ├── app      → The Flask application object
+      ├── .route   → Method of the Flask class
+      ├── ("/")    → The URL path this function handles
+      └── Result   → A decorator that registers the function
+
+    def home():
+      └── This function runs when someone visits "/"
+
+    return "Hello Flask!"
+      └── This is sent back as the HTTP response
+
+Multiple routes on one function:
+    @app.route("/")
+    @app.route("/home")
+    def home():
+        return "Hello!"
+    # Both "/" and "/home" call the same function
+
+
+Real-World Decorator Examples in Flask
+---------------------------------------
+    # Route with HTTP methods
+    @app.route("/tasks", methods=["GET", "POST"])
+    def tasks():
+        if request.method == "POST":
+            # Create task
+        else:
+            # List tasks
+
+    # Error handler
+    @app.errorhandler(404)
+    def not_found(error):
+        return jsonify({"error": "Not found"}), 404
+
+    # Before every request (authentication, logging)
+    @app.before_request
+    def check_auth():
+        # Runs BEFORE every route handler
+
+
+The Connection
+--------------
+    Day 1 (Python):
+        @log_operation           ← Our custom decorator
+        def add_task(title):
+            ...
+
+    Day 2 (Flask):
+        @app.route("/tasks")    ← Flask's route decorator
+        def get_tasks():
+            ...
+
+    SAME CONCEPT, different purpose:
+        Our decorator → logs operations
+        Flask's decorator → connects URLs to functions
+
+
+================================================================
+Code File: task_manager.py
+  - log_operation decorator → applied to add_task, delete_task, etc.
+  - show_decorator_to_flask_bridge() → step-by-step demo
+  - Comments connecting decorators to @app.route()
+================================================================

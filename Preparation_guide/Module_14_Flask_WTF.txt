@@ -1,0 +1,220 @@
+================================================================
+MODULE 14 — Flask-WTF
+================================================================
+Day 3 | Flask Routes, Requests, Forms and APIs
+================================================================
+
+Why Flask-WTF Instead of Plain HTML Forms?
+-------------------------------------------
+Plain HTML forms work, but have problems:
+  ✗ No automatic validation
+  ✗ No CSRF protection
+  ✗ Must manually check each field
+  ✗ Must manually show error messages
+
+Flask-WTF solves all of these:
+  ✓ Automatic validation (is the field empty? too long?)
+  ✓ Built-in CSRF protection (prevents fake form submissions)
+  ✓ Clean error messages next to fields
+  ✓ Reusable form classes
+
+
+1. Flask-WTF and WTForms
+--------------------------
+Flask-WTF is a Flask extension that integrates WTForms.
+  - WTForms → The form library (fields, validators)
+  - Flask-WTF → Connects WTForms with Flask (CSRF, config)
+
+Installation:
+    pip install flask-wtf
+    # This also installs WTForms automatically
+
+
+2. Form Classes
+----------------
+A form is a Python CLASS that defines the fields and rules.
+
+    from flask_wtf import FlaskForm
+    from wtforms import StringField, SubmitField
+    from wtforms.validators import DataRequired
+
+    class AddTaskForm(FlaskForm):
+        title = StringField("Title", validators=[DataRequired()])
+        submit = SubmitField("Add Task")
+
+How it works:
+    1. FlaskForm → Base class (adds CSRF protection)
+    2. StringField → Creates an <input type="text">
+    3. DataRequired() → Field cannot be empty
+    4. SubmitField → Creates a submit button
+
+
+3. Fields
+----------
+WTForms provides fields for every HTML input type:
+
+    Field Type         HTML Element              Usage
+    ──────────         ────────────              ─────
+    StringField        <input type="text">       Task title
+    TextAreaField      <textarea>                Task description
+    SelectField        <select>                  Status dropdown
+    SubmitField        <input type="submit">     Submit button
+    PasswordField      <input type="password">   Passwords
+    IntegerField       <input type="number">     Numbers
+    BooleanField       <input type="checkbox">   Checkboxes
+    DateField          <input type="date">       Dates
+
+Example with multiple fields:
+    class EditTaskForm(FlaskForm):
+        title = StringField("Title", validators=[DataRequired()])
+        description = TextAreaField("Description")
+        status = SelectField("Status", choices=[
+            ("pending", "Pending"),
+            ("in_progress", "In Progress"),
+            ("completed", "Completed")
+        ])
+        submit = SubmitField("Update Task")
+
+
+4. Validators
+--------------
+Validators are RULES that check if the input is valid.
+
+    from wtforms.validators import DataRequired, Length, Email
+
+    Common validators:
+    Validator            What it checks
+    ─────────            ──────────────
+    DataRequired()       Field is not empty
+    Length(min, max)     Text length is within range
+    Email()             Valid email format
+    NumberRange(min,max) Number is within range
+    Optional()          Field can be empty
+    EqualTo("field")    Must match another field
+
+    class TaskForm(FlaskForm):
+        title = StringField("Title", validators=[
+            DataRequired(message="Title is required!"),
+            Length(min=3, max=100, message="Title must be 3-100 chars")
+        ])
+
+
+5. DataRequired
+----------------
+The most common validator — ensures the field is not empty.
+
+    title = StringField("Title", validators=[
+        DataRequired(message="Title is required.")
+    ])
+
+    # If user submits an empty title:
+    # → Form validation FAILS
+    # → Error message "Title is required." is shown
+    # → The form is re-displayed (not submitted)
+
+Custom error messages:
+    DataRequired()                                → "This field is required."
+    DataRequired(message="Please enter a title")  → "Please enter a title"
+
+
+6. CSRF Protection
+-------------------
+CSRF (Cross-Site Request Forgery) is an attack where a MALICIOUS 
+website tricks a user's browser into submitting a form to YOUR site.
+
+Flask-WTF prevents this by:
+    1. Generating a SECRET TOKEN for each form
+    2. Including the token in the form (hidden field)
+    3. Checking the token when the form is submitted
+    4. Rejecting the form if the token is missing or wrong
+
+Setup:
+    app.config["SECRET_KEY"] = "your-secret-key"
+    # SECRET_KEY is required for CSRF tokens
+
+In templates:
+    <form method="POST">
+        {{ form.hidden_tag() }}       ← MUST include this!
+        {{ form.title.label }}
+        {{ form.title() }}
+        {{ form.submit() }}
+    </form>
+
+    form.hidden_tag() renders:
+    <input type="hidden" name="csrf_token" value="a1b2c3d4...">
+
+
+7. Validation Errors
+---------------------
+When validation fails, Flask-WTF stores error messages.
+Display them next to the field:
+
+    <div class="form-group">
+        {{ form.title.label }}
+        {{ form.title(size=40) }}
+        {% for error in form.title.errors %}
+            <span class="error">{{ error }}</span>
+        {% endfor %}
+    </div>
+
+
+Complete Flask-WTF Workflow
+----------------------------
+    # forms.py — Define the form
+    class AddTaskForm(FlaskForm):
+        title = StringField("Title", validators=[DataRequired()])
+        description = TextAreaField("Description")
+        submit = SubmitField("Add Task")
+
+    # app.py — Handle the form
+    @app.route("/tasks/add", methods=["GET", "POST"])
+    def add_task():
+        form = AddTaskForm()
+        
+        if form.validate_on_submit():
+            # ✓ All validation passed!
+            create_task(form.title.data, form.description.data)
+            flash("Task created!", "success")
+            return redirect(url_for("tasks"))
+        
+        # Show the form (GET) or show with errors (POST validation failed)
+        return render_template("add_task.html", form=form)
+
+    # templates/add_task.html — Display the form
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        
+        <div class="form-group">
+            {{ form.title.label }}
+            {{ form.title(size=40) }}
+            {% for error in form.title.errors %}
+                <span class="error">{{ error }}</span>
+            {% endfor %}
+        </div>
+        
+        <div class="form-group">
+            {{ form.description.label }}
+            {{ form.description(rows=4, cols=40) }}
+        </div>
+        
+        {{ form.submit(class="btn") }}
+    </form>
+
+
+form.validate_on_submit() — What It Does
+------------------------------------------
+    1. Checks if the request method is POST
+    2. Runs ALL validators on ALL fields
+    3. Returns True if everything is valid
+    4. Returns False if any validation fails
+    5. Stores error messages in form.field.errors
+
+
+================================================================
+Code Files:
+  forms.py              — AddTaskForm, EditTaskForm classes
+  app.py                — form.validate_on_submit(), form.title.data
+  templates/add_task.html — form.hidden_tag(), form rendering
+  templates/edit_task.html — Pre-filled edit form
+  requirements.txt       — Flask-WTF==1.2.2, WTForms==3.2.1
+================================================================

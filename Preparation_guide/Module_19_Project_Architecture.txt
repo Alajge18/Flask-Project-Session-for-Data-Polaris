@@ -1,0 +1,138 @@
+================================================================
+MODULE 19 — Project Architecture
+================================================================
+Day 5 | Complete Task Management Backend
+================================================================
+
+Why Project Structure Matters
+------------------------------
+A well-organized project is:
+  ✓ Easy to understand
+  ✓ Easy to maintain
+  ✓ Easy to extend
+  ✓ Professional and portfolio-ready
+
+BAD structure (everything in one file):
+    app.py    ← 500+ lines: routes, database, forms, validation
+
+GOOD structure (separation of responsibilities):
+    app.py           ← Application setup + blueprint registration
+    database.py      ← Database operations
+    models.py        ← Data conversion helpers
+    forms.py         ← Form definitions
+    config.py        ← Configuration
+    routes/          ← Route handlers (organized by feature)
+
+
+Our Project Structure
+---------------------
+    task-management/
+    │
+    ├── app.py                 ← Main entry point
+    │                            Creates Flask app, registers blueprints
+    │
+    ├── config.py              ← Configuration settings
+    │                            SECRET_KEY, DATABASE path, debug mode
+    │
+    ├── database.py            ← All database operations
+    │                            connect, create tables, CRUD functions
+    │
+    ├── models.py              ← Data conversion helpers
+    │                            task_to_dict(), user_to_dict()
+    │
+    ├── forms.py               ← Flask-WTF form classes
+    │                            AddTaskForm, EditTaskForm
+    │
+    ├── requirements.txt       ← Python dependencies
+    │                            Flask, Flask-WTF, WTForms, gunicorn
+    │
+    ├── routes/                ← Route handlers (Blueprints)
+    │   ├── __init__.py        ← Makes routes/ a Python package
+    │   ├── task_routes.py     ← All task-related routes
+    │   └── user_routes.py     ← All user-related routes
+    │
+    ├── templates/             ← HTML templates (Jinja2)
+    │   ├── base.html          ← Parent template (nav, layout)
+    │   ├── index.html         ← Homepage/dashboard
+    │   ├── about.html         ← About page
+    │   ├── tasks.html         ← Task list page
+    │   ├── add_task.html      ← Add task form
+    │   ├── edit_task.html     ← Edit task form
+    │   └── task_detail.html   ← Single task view
+    │
+    └── static/                ← Static files (CSS, JS, images)
+        └── style.css          ← Stylesheet
+
+
+Separation of Responsibilities
+-------------------------------
+Each file has ONE job:
+
+    File              Responsibility
+    ────              ──────────────
+    app.py            Create app, register blueprints, start server
+    config.py         Store configuration (SECRET_KEY, DATABASE)
+    database.py       Talk to SQLite (SQL queries)
+    models.py         Convert data formats (Row → Dict)
+    forms.py          Define and validate forms
+    task_routes.py    Handle /tasks and /api/tasks URLs
+    user_routes.py    Handle /users and /api/users URLs
+    templates/        Display HTML pages
+    static/           CSS, JavaScript, images
+
+This means:
+    - app.py doesn't know SQL
+    - database.py doesn't know about Flask routes
+    - forms.py doesn't know about the database
+    - Each piece can be changed INDEPENDENTLY
+
+
+Flask Blueprints
+-----------------
+Blueprints organize routes into MODULES (like mini-apps).
+
+Without blueprints (all in app.py):
+    @app.route("/tasks")           ← All routes in one file
+    @app.route("/tasks/<id>")
+    @app.route("/api/tasks")
+    @app.route("/users")
+    @app.route("/api/users")
+
+With blueprints (organized by feature):
+    # routes/task_routes.py
+    task_bp = Blueprint("tasks", __name__)
+
+    @task_bp.route("/tasks")
+    def list_tasks(): ...
+
+    # routes/user_routes.py
+    user_bp = Blueprint("users", __name__)
+
+    @user_bp.route("/users")
+    def list_users(): ...
+
+    # app.py
+    app.register_blueprint(task_bp)
+    app.register_blueprint(user_bp)
+
+
+How Data Flows Through the Architecture
+-----------------------------------------
+    1. Browser sends request: GET /tasks
+    2. Flask finds the matching route in task_routes.py
+    3. Route function calls database.py: get_all_tasks()
+    4. database.py runs SQL: SELECT * FROM tasks
+    5. SQLite returns rows from tasks.db
+    6. database.py returns rows to route function
+    7. Route converts rows to dicts using models.py
+    8. Route renders template with data
+    9. Flask sends HTML response to browser
+
+
+================================================================
+Code Files:
+  app.py               — Blueprint registration, app factory
+  routes/__init__.py    — Blueprint imports
+  routes/task_routes.py — Task blueprint with all task routes
+  routes/user_routes.py — User blueprint with user routes
+================================================================

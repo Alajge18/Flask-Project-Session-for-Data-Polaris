@@ -1,0 +1,182 @@
+================================================================
+MODULE 9 — HTTP Status Codes
+================================================================
+Day 2 | Backend Fundamentals and First Flask Application
+================================================================
+
+HTTP Status Codes tell the client WHETHER the request succeeded 
+or failed — and WHY.
+
+They are 3-digit numbers grouped into categories:
+  1xx → Informational (rarely used)
+  2xx → Success ✓
+  3xx → Redirection ↗
+  4xx → Client Error ✗ (the client did something wrong)
+  5xx → Server Error ✗ (the server had a problem)
+
+
+Commonly Used Status Codes
+---------------------------
+
+200 — OK
+  The request succeeded. Everything is fine.
+  
+  When to use:
+    - Successfully retrieved data (GET)
+    - Successfully updated data (PUT)
+    - Successfully deleted data (DELETE)
+  
+  Flask:
+    return jsonify(tasks), 200
+    # Note: 200 is the DEFAULT, so you can omit it:
+    return jsonify(tasks)
+
+
+201 — Created
+  A new resource was successfully CREATED.
+  
+  When to use:
+    - After a successful POST that creates something
+  
+  Flask:
+    return jsonify({"message": "Task created", "task": task}), 201
+
+
+204 — No Content
+  The request succeeded, but there's NOTHING to send back.
+  
+  When to use:
+    - After a successful DELETE (nothing to return)
+    - After an update where you don't need to return data
+  
+  Flask:
+    return "", 204
+
+
+400 — Bad Request
+  The client sent INVALID data.
+  
+  When to use:
+    - Missing required fields (no title)
+    - Invalid data format (status = "xyz" instead of "pending")
+    - Malformed JSON
+  
+  Flask:
+    if not data.get("title"):
+        return jsonify({"error": "Task title is required"}), 400
+
+
+401 — Unauthorized
+  The client is NOT authenticated (not logged in).
+  
+  When to use:
+    - No authentication token provided
+    - Token is expired or invalid
+  
+  Flask:
+    if not user_is_logged_in():
+        return jsonify({"error": "Authentication required"}), 401
+
+
+403 — Forbidden
+  The client is authenticated but NOT ALLOWED to do this action.
+  
+  When to use:
+    - User tries to delete another user's task
+    - User tries to access admin-only features
+  
+  Flask:
+    if task["user_id"] != current_user.id:
+        return jsonify({"error": "Not allowed"}), 403
+
+  Difference between 401 and 403:
+    401 = "Who are you?" (not logged in)
+    403 = "I know who you are, but you can't do this" (no permission)
+
+
+404 — Not Found
+  The requested resource DOESN'T EXIST.
+  
+  When to use:
+    - Task with given ID doesn't exist
+    - URL doesn't match any route
+  
+  Flask:
+    task = get_task_by_id(task_id)
+    if not task:
+        return jsonify({"error": "Task not found"}), 404
+
+
+500 — Internal Server Error
+  Something went WRONG on the server.
+  
+  When this happens:
+    - Unhandled exception in your code
+    - Database connection failed
+    - Bug in your application
+  
+  Flask:
+    @app.errorhandler(500)
+    def server_error(error):
+        return jsonify({"error": "Something went wrong"}), 500
+  
+  NOTE: You should NEVER intentionally return 500.
+  It means something unexpected happened.
+
+
+Quick Reference Table
+---------------------
+    Code    Meaning              When to Use
+    ────    ───────              ───────────
+    200     OK                   Successful GET, PUT, DELETE
+    201     Created              Successful POST (new resource)
+    204     No Content           Successful DELETE (no body)
+    400     Bad Request          Invalid/missing client data
+    401     Unauthorized         Not logged in
+    403     Forbidden            No permission
+    404     Not Found            Resource doesn't exist
+    500     Internal Server      Server-side error (bug)
+
+
+How to Use in Flask
+--------------------
+Flask makes it easy to set status codes:
+
+    # Method 1: Tuple return (response, status_code)
+    return jsonify({"error": "Not found"}), 404
+
+    # Method 2: make_response
+    from flask import make_response
+    response = make_response(jsonify({"error": "Not found"}))
+    response.status_code = 404
+    return response
+
+    # Method 3: Global error handlers
+    @app.errorhandler(404)
+    def not_found(error):
+        return jsonify({"error": "Page not found"}), 404
+
+    @app.errorhandler(500)
+    def server_error(error):
+        return jsonify({"error": "Internal server error"}), 500
+
+
+Status Codes in Our Task Manager
+---------------------------------
+    Action                    Success Code    Error Code
+    ──────                    ────────────    ──────────
+    GET /api/tasks            200             -
+    GET /api/tasks/1          200             404 (not found)
+    POST /api/tasks           201             400 (bad data)
+    PUT /api/tasks/1          200             400/404
+    DELETE /api/tasks/1       200             404 (not found)
+
+
+================================================================
+Code File: app.py
+  - 200 used in GET and PUT responses
+  - 201 used in POST responses  
+  - 400 used for validation errors
+  - 404 used when task not found
+  - Error handlers for 404 and 500
+================================================================

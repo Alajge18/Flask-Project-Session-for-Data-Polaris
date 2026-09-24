@@ -1,0 +1,147 @@
+================================================================
+MODULE 11 — Flask Routing
+================================================================
+Day 3 | Flask Routes, Requests, Forms and APIs
+================================================================
+
+Routing is how Flask CONNECTS URLs to Python functions.
+When someone visits a URL, Flask finds the matching route 
+and calls its function.
+
+
+1. Static Routes
+-----------------
+A static route has a FIXED URL — it never changes.
+
+    @app.route("/")
+    def home():
+        return "Home Page"
+
+    @app.route("/about")
+    def about():
+        return "About Page"
+
+    @app.route("/tasks")
+    def get_tasks():
+        return "Task List"
+
+    URL visited           Function called
+    ───────────           ───────────────
+    /                     home()
+    /about                about()
+    /tasks                get_tasks()
+
+
+2. Dynamic Routes
+-----------------
+A dynamic route has a VARIABLE part — it changes based on the URL.
+
+    @app.route("/tasks/<int:task_id>")
+    def get_task(task_id):
+        return f"Task #{task_id}"
+
+    URL visited           task_id value
+    ───────────           ─────────────
+    /tasks/1              1
+    /tasks/42             42
+    /tasks/100            100
+
+The variable part is defined with angle brackets: <variable_name>
+Flask extracts the value from the URL and passes it to the function.
+
+
+3. URL Parameters
+-----------------
+You can have MULTIPLE dynamic parts in a URL:
+
+    @app.route("/users/<int:user_id>/tasks/<int:task_id>")
+    def user_task(user_id, task_id):
+        return f"User {user_id}, Task {task_id}"
+
+    /users/1/tasks/5  → user_id=1, task_id=5
+
+
+4. Route Converters
+--------------------
+Converters tell Flask what TYPE the variable should be:
+
+    Converter    What it does              Example
+    ─────────    ────────────              ───────
+    string       Default. Any text         <username>      → "john"
+    int          Integer numbers           <int:id>        → 42
+    float        Floating-point            <float:price>   → 9.99
+    path         Like string but with /    <path:filepath> → "docs/file.txt"
+
+    @app.route("/tasks/<int:task_id>")     ← Only accepts numbers
+    def get_task(task_id):
+        # task_id is automatically an integer
+        # /tasks/abc would return 404 (not a number)
+        ...
+
+    Why use int: converter?
+      - Automatically converts string to integer
+      - Returns 404 for non-numeric URLs (no error handling needed)
+      - Type safety
+
+
+5. @app.route() — Full Syntax
+------------------------------
+    @app.route(
+        "/tasks",                          ← URL path
+        methods=["GET", "POST"],           ← Allowed HTTP methods
+        endpoint="tasks_endpoint"          ← Optional custom name
+    )
+    def handle_tasks():
+        if request.method == "GET":
+            return get_all_tasks()
+        elif request.method == "POST":
+            return create_task()
+
+
+Route Patterns in Our Task Manager
+------------------------------------
+    # Static route — home page
+    @app.route("/")
+    def home():
+        return render_template("index.html")
+
+    # Static route — task list
+    @app.route("/tasks")
+    def tasks():
+        return render_template("tasks.html")
+
+    # Dynamic route — single task
+    @app.route("/tasks/<int:task_id>")
+    def task_detail(task_id):
+        task = get_task_by_id(task_id)
+        return render_template("task_detail.html", task=task)
+
+    # Dynamic route with method — edit task
+    @app.route("/tasks/<int:task_id>/edit", methods=["GET", "POST"])
+    def edit_task(task_id):
+        ...
+
+
+url_for() — Generating URLs
+-----------------------------
+Instead of hardcoding URLs, use url_for():
+
+    url_for("home")                          → "/"
+    url_for("tasks")                         → "/tasks"
+    url_for("task_detail", task_id=1)        → "/tasks/1"
+    url_for("edit_task", task_id=5)          → "/tasks/5/edit"
+    url_for("tasks", status="pending")       → "/tasks?status=pending"
+
+Why url_for()?
+  - If you change a URL, you only change it in ONE place
+  - Works correctly with different server configurations
+  - Automatically handles URL encoding
+
+
+================================================================
+Code File: app.py
+  - @app.route("/") → static route
+  - @app.route("/tasks/<int:task_id>") → dynamic route
+  - int converter for task IDs
+  - url_for() in templates for navigation
+================================================================

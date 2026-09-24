@@ -1,0 +1,54 @@
+<!-- ============================================================ -->
+<!-- index.html — Homepage / Dashboard (Module 10, 13)            -->
+<!-- ============================================================ -->
+<!-- Shows task stats and quick navigation links.                  -->
+<!-- Module 10: First Flask route (/) returns this page           -->
+<!-- Module 13: Jinja2 — extends, block, variables, url_for       -->
+<!-- ============================================================ -->
+
+{% extends "base.html" %}
+{# Module 13 — Template Inheritance: this page INHERITS from base.html #}
+
+{% block content %}
+{# Module 13 — block/endblock: this replaces {% block content %} in base.html #}
+
+
+<div class="welcome-header">
+    <h1>Welcome to TaskFlow</h1>
+    <p>Your personal task management system.</p>
+</div>
+
+<!-- Task stats cards -->
+<!-- Module 4 — Dictionaries: 'counts' is a dictionary passed from app.py -->
+<!-- counts = {"total": 5, "pending": 2, "in_progress": 1, "completed": 2} -->
+<div class="stats">
+    <div class="stat-card total">
+        <h3>{{ counts.total }}</h3>
+        {# Module 13 — {{ }} outputs a value. counts.total → number #}
+        <p>Total Tasks</p>
+    </div>
+    <div class="stat-card pending">
+        <h3>{{ counts.pending }}</h3>
+        <p>Pending</p>
+    </div>
+    <div class="stat-card in_progress">
+        <h3>{{ counts.in_progress }}</h3>
+        <p>In Progress</p>
+    </div>
+    <div class="stat-card completed">
+        <h3>{{ counts.completed }}</h3>
+        <p>Completed</p>
+    </div>
+</div>
+
+<!-- Quick navigation buttons -->
+<!-- Module 13 — url_for(): generates URLs from function names -->
+<div class="actions">
+    <a href="{{ url_for('tasks.add_task') }}" class="btn">+ Add Task</a>
+    <a href="{{ url_for('tasks.list_tasks') }}" class="btn btn-secondary">View All Tasks</a>
+    <a href="{{ url_for('tasks.list_tasks', status='pending') }}" class="btn btn-outline">View Pending ({{ counts.pending }})</a>
+    {# url_for('tasks.list_tasks', status='pending') → /tasks?status=pending #}
+    {# Module 12 — Query Parameters added via url_for() #}
+</div>
+
+{% endblock %}

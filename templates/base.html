@@ -1,0 +1,92 @@
+{# ============================================================
+   base.html — Parent Template (Module 13)
+   ============================================================ #}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <!-- charset="UTF-8" tells the browser to support all characters (emojis, symbols) -->
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Makes the page responsive on mobile devices -->
+
+    <title>TaskFlow</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!--
+        Module 13 — Jinja2: url_for()
+        url_for('static', filename='style.css') generates the URL to our CSS file.
+        It looks inside the static/ folder for style.css.
+        Result: /static/style.css
+        Why use url_for? It always generates the correct path, even if you move files.
+    -->
+</head>
+
+<body>
+
+    <!-- ===== Navigation Bar ===== -->
+    <!-- This appears on EVERY page because it's in base.html -->
+    <!-- Module 13 — Jinja2: url_for() generates URLs from function names -->
+    <nav>
+        <a href="{{ url_for('tasks.home') }}" class="logo">TaskFlow</a>
+        <!-- url_for('tasks.home') generates the URL for the home() function → "/" -->
+        <!-- 'tasks.home' means: blueprint "tasks", function "home" -->
+
+        <div>
+            <a href="{{ url_for('tasks.list_tasks') }}">Tasks</a>
+            <!-- url_for('tasks.list_tasks') → "/tasks" -->
+
+            <a href="{{ url_for('tasks.add_task') }}">Add Task</a>
+            <!-- url_for('tasks.add_task') → "/tasks/add" -->
+
+            <a href="{{ url_for('tasks.about') }}">About</a>
+            <!-- url_for('tasks.about') → "/about" -->
+        </div>
+    </nav>
+
+    <!-- ===== Main Content Area ===== -->
+    <div class="container">
+
+        <!-- ===== Flash Messages (Module 13) ===== -->
+        <!--
+            Flash messages are one-time notifications.
+            In app.py/routes, we write: flash("Task created!", "success")
+            Here, we display them. They appear ONCE and disappear on the next page load.
+
+            get_flashed_messages(with_categories=true) returns a list of (category, message) pairs.
+            category = "success" or "error" — used for green or red styling.
+        -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="flash {{ category }}">{{ message }}</div>
+        <!--
+                        {{ category }} becomes "success" or "error" → CSS class for color
+                        {{ message }} becomes "Task created!" → the actual text shown
+                    -->
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        {# ===== Page Content (Module 13 — Template Inheritance) ===== #}
+        {#
+        block content / endblock
+
+        This is a PLACEHOLDER. Each child template replaces this block
+        with its own content. For example:
+
+        In index.html:
+        {% block content %}
+        <h1>Welcome to TaskFlow</h1>
+        {% endblock %}
+
+        The result: base.html's structure + index.html's content = complete page.
+        #}
+        {% block content %}{% endblock %}
+
+    </div>
+</body>
+
+</html>

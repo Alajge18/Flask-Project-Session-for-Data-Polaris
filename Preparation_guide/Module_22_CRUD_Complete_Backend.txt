@@ -1,0 +1,159 @@
+================================================================
+MODULE 22 — CRUD and Complete Backend
+================================================================
+Day 5 | Complete Task Management Backend
+================================================================
+
+This module brings EVERYTHING together. All the pieces from 
+Days 1–4 combine into a complete, working backend.
+
+
+What CRUD Means
+----------------
+    C = Create  → Add new data       (POST + INSERT)
+    R = Read    → Get existing data   (GET + SELECT)
+    U = Update  → Modify data         (PUT + UPDATE)
+    D = Delete  → Remove data         (DELETE + DELETE)
+
+Almost every web application is based on CRUD operations.
+
+
+Complete Feature List
+---------------------
+    ✓ User creation         → POST /api/users
+    ✓ Task creation         → POST /api/tasks + HTML form
+    ✓ Task listing          → GET /api/tasks + HTML page
+    ✓ Single task retrieval → GET /api/tasks/<id> + HTML page
+    ✓ Task update           → PUT /api/tasks/<id> + HTML form
+    ✓ Task deletion         → DELETE /api/tasks/<id> + HTML link
+    ✓ Task filtering        → GET /api/tasks?status=pending
+    ✓ Task searching        → GET /tasks/search?q=flask
+    ✓ Request validation    → 400 errors for bad data
+    ✓ Error handling        → 404, 500 error handlers
+    ✓ SQLite database       → Persistent data in tasks.db
+    ✓ REST APIs             → JSON endpoints for programmatic access
+    ✓ HTML Interface        → Web forms for browser-based use
+
+
+How Everything Connects
+-------------------------
+
+    Layer 1 — Client (Browser or Postman)
+        Sends HTTP requests, receives responses
+
+    Layer 2 — Routes (app.py, routes/*.py)
+        Matches URLs to functions
+        Reads request data
+        Calls business logic
+        Returns responses
+
+    Layer 3 — Forms (forms.py)
+        Validates HTML form submissions
+        CSRF protection
+
+    Layer 4 — Models (models.py)
+        Converts database rows to dictionaries
+        Defines valid statuses
+
+    Layer 5 — Database (database.py)
+        Connects to SQLite
+        Executes SQL queries
+        Returns data
+
+    Layer 6 — SQLite (tasks.db)
+        Stores data permanently on disk
+
+
+The Full Request Lifecycle
+---------------------------
+    Example: User creates a task via HTML form
+
+    1. User visits /tasks/add (GET)
+       → Flask serves add_task.html with empty form
+
+    2. User fills in title and description, clicks Submit
+
+    3. Browser sends POST /tasks/add with form data
+
+    4. Flask routes to add_task() in task_routes.py
+
+    5. AddTaskForm validates the data
+       - If invalid → re-render form with error messages
+       - If valid → continue
+
+    6. Route calls create_task(title, desc, status) in database.py
+
+    7. database.py runs: INSERT INTO tasks VALUES (?, ?, ?)
+
+    8. SQLite saves the data to tasks.db
+
+    9. Route does: flash("Task created!", "success")
+
+    10. Route does: redirect(url_for("tasks.list_tasks"))
+
+    11. Browser follows redirect to /tasks
+
+    12. Flask renders tasks.html with all tasks from database
+
+    13. User sees the task list with a success message
+
+
+Testing with Postman
+---------------------
+    Create a Postman collection with these requests:
+
+    1. Create User
+       POST http://localhost:5000/api/users
+       Body: {"name": "Alice", "email": "alice@email.com"}
+
+    2. Create Task
+       POST http://localhost:5000/api/tasks
+       Body: {"title": "Learn Flask", "user_id": 1}
+
+    3. List Tasks
+       GET http://localhost:5000/api/tasks
+
+    4. Get Single Task
+       GET http://localhost:5000/api/tasks/1
+
+    5. Update Task
+       PUT http://localhost:5000/api/tasks/1
+       Body: {"status": "completed"}
+
+    6. Delete Task
+       DELETE http://localhost:5000/api/tasks/1
+
+    7. Filter Tasks
+       GET http://localhost:5000/api/tasks?status=pending
+
+
+Day 5 Deliverable
+-------------------
+    At the end of Day 5, students have:
+
+    ✓ A complete Flask + SQLite backend
+    ✓ User and Task management
+    ✓ HTML web interface with forms
+    ✓ REST API with JSON responses
+    ✓ Input validation and error handling
+    ✓ Clean project architecture
+    ✓ Database persistence
+
+    Tomorrow (Day 6):
+    → Make it production-ready
+    → Push to GitHub
+    → Deploy to the internet!
+
+
+================================================================
+Code Files: ALL files working together
+  app.py               — Main app with blueprints
+  config.py            — Configuration
+  database.py          — All database operations
+  models.py            — Data helpers
+  forms.py             — Form classes
+  routes/task_routes.py — Task routes (HTML + API)
+  routes/user_routes.py — User routes (API)
+  templates/*.html      — All HTML pages
+  static/style.css      — Styling
+================================================================

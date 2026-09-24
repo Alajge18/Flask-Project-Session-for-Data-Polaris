@@ -1,0 +1,170 @@
+================================================================
+MODULE 16 — Database Fundamentals
+================================================================
+Day 4 | Database and SQLite
+================================================================
+
+Why Do We Need a Database?
+--------------------------
+In our Flask app so far, tasks are stored in an IN-MEMORY list:
+
+    tasks = []
+
+Problem: When the Flask server RESTARTS, all data DISAPPEARS!
+
+    Server starts → tasks = [] → empty
+    User adds tasks → tasks = [task1, task2, task3]
+    Server restarts → tasks = [] → ALL GONE!
+
+Solution: Store data in a DATABASE → data PERSISTS forever.
+
+
+1. Database
+-----------
+A database is an organized collection of data stored on disk.
+It survives server restarts, crashes, and power outages.
+
+Types of databases:
+    Relational (SQL):     SQLite, MySQL, PostgreSQL
+    Non-relational (NoSQL): MongoDB, Redis, Firebase
+
+We use SQLite because:
+  ✓ Built into Python (no installation needed)
+  ✓ Stores everything in ONE file (tasks.db)
+  ✓ Perfect for learning and small applications
+  ✓ No separate server to run
+
+
+2. Table
+--------
+A table is like a SPREADSHEET — it stores data in rows and columns.
+
+    tasks table:
+    ┌────┬──────────────┬─────────────┬───────────┬─────────────────────┐
+    │ id │ title        │ description │ status    │ created_at          │
+    ├────┼──────────────┼─────────────┼───────────┼─────────────────────┤
+    │  1 │ Learn Flask  │ Study docs  │ pending   │ 2025-01-15 10:30:00 │
+    │  2 │ Build API    │ CRUD tasks  │ in_prog   │ 2025-01-15 11:00:00 │
+    │  3 │ Deploy App   │ Use Render  │ completed │ 2025-01-15 14:00:00 │
+    └────┴──────────────┴─────────────┴───────────┴─────────────────────┘
+
+A database can have MULTIPLE tables:
+    - tasks table
+    - users table
+
+
+3. Row
+------
+A row is ONE record (one task, one user).
+
+    Row 1: {id: 1, title: "Learn Flask", status: "pending"}
+    Row 2: {id: 2, title: "Build API", status: "in_progress"}
+
+Each row represents one INSTANCE of the data.
+In Python terms: one row = one dictionary.
+
+
+4. Column
+---------
+A column is a FIELD (attribute) that every row has.
+
+    id          → Unique identifier (auto-generated)
+    title       → Task name (required)
+    description → Task details (optional)
+    status      → Current state (pending/in_progress/completed)
+    created_at  → When the task was created (auto-generated)
+
+Each column has a DATA TYPE:
+    TEXT     → Strings ("Learn Flask")
+    INTEGER  → Numbers (1, 2, 3)
+    REAL     → Decimal numbers (3.14)
+    BLOB     → Binary data (images, files)
+    TIMESTAMP → Date and time
+
+
+5. Primary Key
+--------------
+A primary key is a UNIQUE identifier for each row.
+No two rows can have the same primary key.
+
+    id INTEGER PRIMARY KEY AUTOINCREMENT
+
+    - id is the primary key
+    - AUTOINCREMENT means the database assigns 1, 2, 3... automatically
+    - You NEVER set the id manually
+
+In our app:
+    Task #1 → id = 1
+    Task #2 → id = 2
+    Delete Task #2 → id 2 is GONE forever (not reused)
+    Task #3 → id = 3 (not 2!)
+
+
+6. Foreign Key
+--------------
+A foreign key LINKS one table to another.
+It references the primary key of a different table.
+
+    users table:
+    ┌────┬────────┬──────────────────┐
+    │ id │ name   │ email            │
+    ├────┼────────┼──────────────────┤
+    │  1 │ Alice  │ alice@email.com  │
+    │  2 │ Bob    │ bob@email.com    │
+    └────┴────────┴──────────────────┘
+
+    tasks table:
+    ┌────┬─────────┬──────────────┬───────────┐
+    │ id │ user_id │ title        │ status    │
+    ├────┼─────────┼──────────────┼───────────┤
+    │  1 │    1    │ Learn Flask  │ pending   │  ← belongs to Alice
+    │  2 │    1    │ Build API    │ completed │  ← belongs to Alice
+    │  3 │    2    │ Deploy App   │ pending   │  ← belongs to Bob
+    └────┴─────────┴──────────────┴───────────┘
+
+    user_id in tasks → REFERENCES → id in users
+    This is a FOREIGN KEY relationship.
+
+
+7. Relationships
+----------------
+Tables can be related to each other:
+
+    ONE-TO-MANY (most common):
+        One user has MANY tasks.
+        One task belongs to ONE user.
+
+        User (1) ←→ (Many) Tasks
+
+        User "Alice"
+        │
+        ├── Task "Learn Flask"
+        ├── Task "Build API"
+        └── Task "Deploy App"
+
+    This is the relationship in our project:
+        users.id ←→ tasks.user_id
+
+
+Database vs Python Dictionary
+-------------------------------
+    Python (in-memory):              Database (persistent):
+    tasks = [                        CREATE TABLE tasks (
+        {"id": 1, ...},                  id INTEGER PRIMARY KEY,
+        {"id": 2, ...}                   title TEXT,
+    ]                                    status TEXT
+                                     );
+
+    tasks.append(new_task)           INSERT INTO tasks VALUES (...)
+    [t for t in tasks if ...]        SELECT * FROM tasks WHERE ...
+    tasks[0]["title"] = "new"        UPDATE tasks SET title="new" WHERE ...
+    tasks.remove(task)               DELETE FROM tasks WHERE ...
+
+
+================================================================
+Code File: database.py (Module 17-18)
+  - init_db() creates tables (users, tasks)
+  - users table with id, name, email
+  - tasks table with id, user_id, title, description, status
+  - Foreign key: tasks.user_id → users.id
+================================================================

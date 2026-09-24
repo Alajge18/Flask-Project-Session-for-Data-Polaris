@@ -1,0 +1,186 @@
+================================================================
+MODULE 20 — API Endpoint Design
+================================================================
+Day 5 | Complete Task Management Backend
+================================================================
+
+Designing good API endpoints is about creating a CONSISTENT 
+and PREDICTABLE interface that other programs can use.
+
+
+Our Complete API Endpoints
+---------------------------
+
+User Endpoints:
+    Method    Route              Purpose
+    ──────    ─────              ───────
+    POST      /api/users         Create a new user
+    GET       /api/users/<id>    Get user by ID
+
+Task Endpoints:
+    Method    Route              Purpose
+    ──────    ─────              ───────
+    POST      /api/tasks         Create a new task
+    GET       /api/tasks         Get all tasks (with optional filters)
+    GET       /api/tasks/<id>    Get a single task
+    PUT       /api/tasks/<id>    Update a task
+    DELETE    /api/tasks/<id>    Delete a task
+
+
+POST /api/users — Create User
+-------------------------------
+    Request:
+        POST /api/users
+        Content-Type: application/json
+        
+        {
+            "name": "Alice",
+            "email": "alice@email.com"
+        }
+
+    Success Response (201 Created):
+        {
+            "message": "User created successfully",
+            "user": {
+                "id": 1,
+                "name": "Alice",
+                "email": "alice@email.com"
+            }
+        }
+
+    Error Response (400 Bad Request):
+        {"error": "Name and email are required"}
+
+
+GET /api/users/<id> — Get User
+-------------------------------
+    Request:
+        GET /api/users/1
+
+    Success Response (200 OK):
+        {
+            "id": 1,
+            "name": "Alice",
+            "email": "alice@email.com"
+        }
+
+    Error Response (404 Not Found):
+        {"error": "User not found"}
+
+
+POST /api/tasks — Create Task
+-------------------------------
+    Request:
+        POST /api/tasks
+        Content-Type: application/json
+        
+        {
+            "title": "Learn Flask",
+            "description": "Study Flask framework",
+            "user_id": 1
+        }
+
+    Success Response (201 Created):
+        {
+            "message": "Task created successfully",
+            "task": {
+                "id": 1,
+                "user_id": 1,
+                "title": "Learn Flask",
+                "description": "Study Flask framework",
+                "status": "pending",
+                "created_at": "2025-01-15 10:30:00"
+            }
+        }
+
+
+GET /api/tasks — Get All Tasks
+-------------------------------
+    Basic:
+        GET /api/tasks
+        → Returns ALL tasks
+
+    With status filter:
+        GET /api/tasks?status=pending
+        → Returns only pending tasks
+
+    Response (200 OK):
+        [
+            {"id": 1, "title": "Learn Flask", "status": "pending"},
+            {"id": 2, "title": "Build API", "status": "completed"}
+        ]
+
+
+GET /api/tasks/<id> — Get Single Task
+--------------------------------------
+    Request:
+        GET /api/tasks/1
+
+    Success Response (200):
+        {"id": 1, "title": "Learn Flask", "status": "pending"}
+
+    Error Response (404):
+        {"error": "Task not found"}
+
+
+PUT /api/tasks/<id> — Update Task
+-----------------------------------
+    Request:
+        PUT /api/tasks/1
+        Content-Type: application/json
+        
+        {
+            "title": "Learn Flask & SQLite",
+            "status": "in_progress"
+        }
+
+    Success Response (200):
+        {
+            "message": "Task updated successfully",
+            "task": {"id": 1, "title": "Learn Flask & SQLite", "status": "in_progress"}
+        }
+
+
+DELETE /api/tasks/<id> — Delete Task
+-------------------------------------
+    Request:
+        DELETE /api/tasks/1
+
+    Success Response (200):
+        {"message": "Task deleted successfully"}
+
+    Error Response (404):
+        {"error": "Task not found"}
+
+
+Design Principles
+------------------
+    1. Use NOUNS (not verbs) for URLs:
+       ✓ /api/tasks     → Good
+       ✗ /api/getTasks  → Bad
+
+    2. Use HTTP methods for actions:
+       ✓ GET /api/tasks     → List
+       ✓ POST /api/tasks    → Create
+       ✗ POST /api/createTask → Bad
+
+    3. Use PLURAL nouns:
+       ✓ /api/tasks
+       ✗ /api/task
+
+    4. Use consistent response format:
+       Success: {"message": "...", "data": {...}}
+       Error:   {"error": "..."}
+
+    5. Use appropriate status codes:
+       201 for creation
+       200 for success
+       400 for bad input
+       404 for not found
+
+
+================================================================
+Code Files:
+  routes/task_routes.py  — All task API endpoints
+  routes/user_routes.py  — All user API endpoints
+================================================================

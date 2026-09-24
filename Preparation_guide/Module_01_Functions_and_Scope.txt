@@ -1,0 +1,139 @@
+================================================================
+MODULE 1 — Functions and Scope
+================================================================
+Day 1 | Python for Backend Development
+================================================================
+
+What is a Function?
+-------------------
+A function is a REUSABLE block of code that performs a specific task.
+Instead of writing the same code again and again, you write it ONCE 
+inside a function and CALL it whenever needed.
+
+In backend development, functions are the building blocks:
+  - Each API endpoint is a function
+  - Business logic is organized into functions
+  - Database operations are functions
+
+
+1. Function Parameters
+----------------------
+Parameters are the INPUT values a function receives.
+
+    def greet(name):          ← 'name' is a parameter
+        print(f"Hello, {name}!")
+    
+    greet("Pranav")           ← "Pranav" is an argument (the actual value)
+
+In Flask:
+    @app.route("/tasks/<int:id>")
+    def get_task(id):         ← 'id' comes from the URL
+        ...
+
+
+2. Return Values
+----------------
+Functions can SEND BACK a result using 'return'.
+
+    def add(a, b):
+        return a + b          ← sends the result back
+    
+    result = add(3, 5)        ← result = 8
+
+In Flask:
+    def get_tasks():
+        return jsonify(tasks)  ← returns JSON data to the client
+
+IMPORTANT:
+  - A function WITHOUT return gives back None
+  - return immediately EXITS the function
+  - You can return any type: string, number, list, dictionary
+
+
+3. Default Arguments
+--------------------
+Parameters can have DEFAULT values. If the caller doesn't provide 
+a value, Python uses the default.
+
+    def create_task(title, status="pending"):
+        ...
+
+    create_task("Learn Flask")                  → status is "pending"
+    create_task("Learn Flask", "completed")     → status is "completed"
+
+In Flask:
+    def get_tasks():
+        status = request.args.get("status", "all")
+        # "all" is the default if ?status= is not in the URL
+
+
+4. Variable Scope
+-----------------
+SCOPE determines WHERE a variable can be accessed.
+
+    count = 0                    ← GLOBAL scope: accessible everywhere
+
+    def increment():
+        local_var = 10           ← LOCAL scope: only inside this function
+        print(count)             ← Can READ global variables
+        # count = count + 1      ← ERROR! Can't MODIFY global without 'global' keyword
+
+    print(local_var)             ← ERROR! local_var doesn't exist here
+
+Rules:
+  - Variables created INSIDE a function are LOCAL
+  - Variables created OUTSIDE functions are GLOBAL
+  - Local variables are DESTROYED when the function ends
+  - Functions can READ global variables but NOT modify them (without 'global')
+
+
+5. *args (Variable Positional Arguments)
+----------------------------------------
+*args collects EXTRA positional arguments into a TUPLE.
+
+    def print_tasks(*args):
+        for task in args:
+            print(task)
+    
+    print_tasks("Task 1", "Task 2", "Task 3")
+    # args = ("Task 1", "Task 2", "Task 3")
+
+Use *args when you don't know how many arguments will be passed.
+
+
+6. **kwargs (Variable Keyword Arguments)
+----------------------------------------
+**kwargs collects EXTRA keyword arguments into a DICTIONARY.
+
+    def create_task(title, **kwargs):
+        print(f"Title: {title}")
+        print(f"Options: {kwargs}")
+    
+    create_task("Learn Flask", priority="high", category="web")
+    # kwargs = {"priority": "high", "category": "web"}
+
+In Flask:
+    url_for('tasks', status='pending', page=1)
+    # The extra arguments become query parameters: /tasks?status=pending&page=1
+
+
+How Functions Connect to Flask
+------------------------------
+In Flask, EVERY route handler is a function:
+
+    @app.route("/tasks")          ← URL
+    def get_tasks():              ← Function (route handler)
+        tasks = get_all_tasks()   ← Calls another function
+        return jsonify(tasks)     ← Returns data
+
+The entire Flask application is organized as functions.
+Understanding functions is ESSENTIAL for backend development.
+
+
+================================================================
+Code File: task_manager.py
+  - add_task() demonstrates parameters, return values, defaults
+  - get_all_tasks() demonstrates return values
+  - print_task_info() demonstrates *args and **kwargs
+  - Variable scope shown through local vs instance variables
+================================================================

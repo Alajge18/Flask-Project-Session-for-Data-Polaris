@@ -1,0 +1,188 @@
+================================================================
+MODULE 8 — HTTP Methods
+================================================================
+Day 2 | Backend Fundamentals and First Flask Application
+================================================================
+
+HTTP Methods tell the server WHAT ACTION to perform.
+They are the VERBS of the web.
+
+
+The Five Core HTTP Methods
+--------------------------
+
+1. GET — Retrieve Data
+   "Give me information"
+
+   Purpose: READ data from the server (no changes)
+   Has body: NO
+   Safe: YES (doesn't change anything)
+   
+   Task Management Example:
+     GET /tasks           → Get ALL tasks
+     GET /tasks/1         → Get task #1
+     GET /tasks?status=pending → Get pending tasks only
+
+   Flask:
+     @app.route("/tasks", methods=["GET"])
+     def get_tasks():
+         return jsonify(tasks)
+
+   Browser: Every time you visit a URL, it's a GET request.
+
+
+2. POST — Create Data
+   "Create something new"
+
+   Purpose: SEND data to create a new resource
+   Has body: YES (the data to create)
+   Safe: NO (changes data)
+   
+   Task Management Example:
+     POST /tasks
+     Body: {"title": "Learn Flask", "description": "..."}
+     → Creates a NEW task
+     → Returns the created task with a new ID
+
+   Flask:
+     @app.route("/tasks", methods=["POST"])
+     def create_task():
+         data = request.get_json()
+         # Create and save the task
+         return jsonify(new_task), 201
+
+   Forms: When you submit an HTML form, it's usually a POST request.
+
+
+3. PUT — Update Data (Full)
+   "Replace/update this resource"
+
+   Purpose: UPDATE an existing resource
+   Has body: YES (the updated data)
+   Safe: NO (changes data)
+   
+   Task Management Example:
+     PUT /tasks/1
+     Body: {"title": "Updated Title", "status": "completed"}
+     → Updates task #1 with new data
+
+   Flask:
+     @app.route("/tasks/<int:id>", methods=["PUT"])
+     def update_task(id):
+         data = request.get_json()
+         # Update the task
+         return jsonify(updated_task), 200
+
+
+4. PATCH — Partially Update Data
+   "Change just ONE field"
+
+   Purpose: UPDATE only SPECIFIC fields (not all)
+   Has body: YES (only the fields to change)
+   Safe: NO (changes data)
+   
+   Task Management Example:
+     PATCH /tasks/1
+     Body: {"status": "completed"}
+     → ONLY changes the status, everything else stays the same
+
+   Difference between PUT and PATCH:
+     PUT   → Sends ALL fields (replaces the entire resource)
+     PATCH → Sends ONLY changed fields (partial update)
+
+   Flask:
+     @app.route("/tasks/<int:id>", methods=["PATCH"])
+     def patch_task(id):
+         data = request.get_json()
+         # Update only provided fields
+         return jsonify(updated_task), 200
+
+
+5. DELETE — Delete Data
+   "Remove this resource"
+
+   Purpose: DELETE a resource
+   Has body: Usually NO
+   Safe: NO (changes data permanently)
+   
+   Task Management Example:
+     DELETE /tasks/1
+     → Deletes task #1
+
+   Flask:
+     @app.route("/tasks/<int:id>", methods=["DELETE"])
+     def delete_task(id):
+         # Delete the task
+         return jsonify({"message": "Deleted"}), 200
+
+
+Summary Table
+-------------
+    Method   Purpose              Example               Body?
+    ──────   ───────              ───────               ─────
+    GET      Retrieve data        Get tasks             No
+    POST     Create data          Create new task       Yes
+    PUT      Update data (full)   Update task           Yes
+    PATCH    Partially update     Change task status    Yes
+    DELETE   Delete data          Delete task           No
+
+
+How Flask Handles Methods
+-------------------------
+By default, Flask routes only accept GET:
+
+    @app.route("/tasks")         ← Only GET works
+
+To accept other methods:
+
+    @app.route("/tasks", methods=["GET", "POST"])
+    def tasks():
+        if request.method == "POST":
+            # Create task
+        else:
+            # List tasks
+
+Or separate functions for each method:
+
+    @app.route("/api/tasks", methods=["GET"])
+    def get_tasks():
+        # List tasks
+
+    @app.route("/api/tasks", methods=["POST"])
+    def create_task():
+        # Create task
+
+
+CRUD ↔ HTTP Methods
+--------------------
+    CRUD Operation    HTTP Method    SQL Equivalent
+    ──────────────    ───────────    ──────────────
+    Create            POST           INSERT
+    Read              GET            SELECT
+    Update            PUT/PATCH      UPDATE
+    Delete            DELETE         DELETE
+
+
+Testing HTTP Methods
+--------------------
+You can test different HTTP methods using:
+
+    1. Browser → Only GET (by visiting URLs)
+    2. Postman → All methods (visual interface)
+    3. curl → All methods (command line)
+
+    curl examples:
+      curl http://localhost:5000/tasks                      ← GET
+      curl -X POST -H "Content-Type: application/json" \
+           -d '{"title":"New Task"}' \
+           http://localhost:5000/tasks                      ← POST
+      curl -X DELETE http://localhost:5000/tasks/1          ← DELETE
+
+
+================================================================
+Code File: app.py
+  - GET routes for listing and viewing tasks
+  - POST routes for creating tasks
+  - PUT routes for updating tasks
+  - DELETE routes for deleting tasks
+================================================================
